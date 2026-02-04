@@ -15,7 +15,7 @@ def extract_fixed(text, start, length):
 def normalize_nopol(text):
     if pd.isna(text): return None
     text = str(text).upper()
-    match = re.search(r'BL\s*-?\s*\d{1,4}\s*-?\s*[A-Z]{1,3}', text)
+    match = re.search(r'BL\s*-?\\s*\d{1,4}\s*-?\\s*[A-Z]{1,3}', text)
     if match:
         return re.sub(r'[^A-Z0-9]', '', match.group())
     return None
@@ -42,7 +42,7 @@ if excel_file and txt_file:
     df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
     df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
 
-    # Ekstraksi kolom TXT (Posisi disesuaikan dengan file Samkel)
+    # Ekstraksi kolom TXT
     df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
     df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
     df_txt['POKOK_1']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 104, 7))
@@ -71,12 +71,19 @@ if excel_file and txt_file:
     hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])].copy()
     hanya_txt = df_txt[~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])].copy()
 
-    # Tambahkan Cek Selisih Rupiah di Data yang Cocok
+    # Hitung Selisih
     cocok['SELISIH_CHECK'] = cocok['TOTAL_ALL_TXT'] - cocok['Jumlah']
+
+    # PINDAHKAN KOLOM KE DEPAN (Setelah No Polisi)
+    cols = cocok.columns.tolist()
+    # No Polisi biasanya ada di index awal, kita pindahkan SELISIH_CHECK ke index 1 atau 2
+    if 'No Polisi' in cols:
+        idx = cols.index('No Polisi') + 1
+        cols.insert(idx, cols.pop(cols.index('SELISIH_CHECK')))
+        cocok = cocok[cols]
 
     # --- 4. RINGKASAN DASHBOARD ---
     st.subheader("📊 Ringkasan Perbandingan Data")
-    st.caption("ℹ️ **Gap** = (Total Semua TXT) - (Total Semua Excel). Jika merah, berarti ada perbedaan angka.")
     
     gap_nopol = len(df_txt) - len(df_excel)
     gap_pokok = df_txt['TOTAL_POKOK_TXT'].sum() - df_excel['POKOK_EXCEL'].sum()
@@ -84,7 +91,6 @@ if excel_file and txt_file:
     gap_total = df_txt['TOTAL_ALL_TXT'].sum() - df_excel['Jumlah'].sum()
 
     m0, m1, m2, m3 = st.columns(4)
-    # delta_color="inverse" membuat selisih non-nol menjadi MERAH
     m0.metric("Total Nopol", f"{len(df_txt)} Unit", f"Gap: {gap_nopol}", delta_color="inverse")
     m1.metric("Total Pokok", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}", f"Gap: Rp {gap_pokok:,.0f}", delta_color="inverse")
     m2.metric("Total Denda", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}", f"Gap: Rp {gap_denda:,.0f}", delta_color="inverse")
@@ -97,8 +103,15 @@ if excel_file and txt_file:
 
     with tab1:
         st.subheader("✅ Data ditemukan di CERI dan Splitzing")
-        st.write("Kolom **SELISIH_CHECK** menunjukkan perbedaan nominal pada Nopol yang sama.")
-        st.dataframe(cocok)
+        
+        # Fungsi untuk highlight baris yang selisih
+        def highlight_diff(s):
+            return ['background-color: #ffcccc' if s.SELISIH_CHECK != 0 else '' for _ in s]
+
+        # Tampilkan tabel dengan style
+        df_display_cocok = cocok.drop(columns=['RAW_TEXT'], errors='ignore')
+        st.dataframe(df_display_cocok.style.apply(highlight_diff, axis=1))
+        
         st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
 
     with tab2:
@@ -113,7 +126,7 @@ if excel_file and txt_file:
 
     with tab3:
         st.subheader("⚠️ Ada di Splitzing (TXT) Tapi Tidak Ada di Excel")
-        st.dataframe(hanya_txt)
+        st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'))
         st.divider()
         st.subheader("💰 Rekapitulasi (Hanya di TXT)")
         t1, t2, t3 = st.columns(3)
