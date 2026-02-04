@@ -3,6 +3,29 @@ import pandas as pd
 import re
 import time
 
+def draw_footer():
+    footer_html = """
+    <style>
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: #f1f1f1;
+        color: #555;
+        text-align: center;
+        padding: 10px;
+        font-size: 14px;
+        border-top: 1px solid #e7e7e7;
+        z-index: 999;
+    }
+    </style>
+    <div class="footer">
+        <p>2026 Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol</p>
+    </div>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
+
 st.set_page_config(page_title="Bandingkan Nopol Selisih JR Aceh", layout="wide")
 st.title("Aplikasi Perbandingan Nopol Selisih JR Aceh")
 
@@ -176,3 +199,5 @@ if excel_input and txt_input:
             t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
             t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
             t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
+
+    draw_footer()
