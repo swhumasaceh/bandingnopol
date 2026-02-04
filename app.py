@@ -121,9 +121,9 @@ def proses_data_audit(excel_file, txt_file):
 # --- UI LOGIC ---
 col1, col2 = st.columns(2)
 with col1:
-    excel_input = st.file_uploader("Upload Excel (CERI)", type=["xlsx"])
+    excel_input = st.file_uploader("Upload Excel (CERI)", type=["xlsx", "xlx"])
 with col2:
-    txt_input = st.file_uploader("Upload TXT (Splitzing)", type=["txt"])
+    txt_input = st.file_uploader("Upload TXT/DAT (Splitzing)", type=["txt", "dat"])
 
 # --- LOGIKA AUTO-RESET SAAT UPLOAD BARU ---
 if 'file_excel_name' not in st.session_state: st.session_state.file_excel_name = None
@@ -241,6 +241,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
