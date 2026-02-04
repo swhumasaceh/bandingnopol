@@ -6,6 +6,12 @@ import time
 st.set_page_config(page_title="Bandingkan Nopol Selisih JR Aceh", layout="wide")
 st.title("Aplikasi Perbandingan Nopol Selisih JR Aceh")
 
+# --- TAMBAHKAN SUBHEADER DI SINI ---
+st.subheader("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing, pastikan seluruh data yang diupload sudah rapi, khususnya file txt splitzing ya!")
+
+# (Opsional) Jika ingin garis pemisah agar lebih rapi
+st.divider()
+
 def extract_fixed(text, start, length):
     try:
         val = text[start-1:start-1+length].strip()
@@ -141,4 +147,5 @@ if excel_file and txt_file:
                 t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
                 t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
                 t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
+
 
