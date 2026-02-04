@@ -15,7 +15,7 @@ def extract_fixed(text, start, length):
 def normalize_nopol(text):
     if pd.isna(text): return None
     text = str(text).upper()
-    match = re.search(r'BL\s*-?\\s*\d{1,4}\s*-?\\s*[A-Z]{1,3}', text)
+    match = re.search(r'BL\s*-?\s*\d{1,4}\s*-?\s*[A-Z]{1,3}', text)
     if match:
         return re.sub(r'[^A-Z0-9]', '', match.group())
     return None
@@ -42,6 +42,7 @@ if excel_file and txt_file:
     df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
     df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
 
+    # Ekstraksi kolom TXT
     df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
     df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
     df_txt['POKOK_1']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 104, 7))
@@ -72,13 +73,6 @@ if excel_file and txt_file:
 
     # Hitung Selisih
     cocok['SELISIH_CHECK'] = cocok['TOTAL_ALL_TXT'] - cocok['Jumlah']
-
-    # Pindahkan kolom SELISIH_CHECK ke depan (setelah No Polisi)
-    cols = cocok.columns.tolist()
-    if 'No Polisi' in cols:
-        idx = cols.index('No Polisi') + 1
-        cols.insert(idx, cols.pop(cols.index('SELISIH_CHECK')))
-        cocok = cocok[cols]
 
     # --- 4. RINGKASAN DASHBOARD ---
     st.subheader("📊 Ringkasan Perbandingan Data")
@@ -113,13 +107,8 @@ if excel_file and txt_file:
         
         st.divider()
 
-        # Fungsi highlight baris
-        def highlight_diff(s):
-            return ['background-color: #ffcccc' if s.SELISIH_CHECK != 0 else '' for _ in s]
-
-        # Tampilkan tabel tanpa RAW_TEXT
-        df_display = cocok.drop(columns=['RAW_TEXT'], errors='ignore')
-        st.dataframe(df_display.style.apply(highlight_diff, axis=1), use_container_width=True)
+        # Tampilkan tabel tanpa RAW_TEXT dan tanpa styling/pindah kolom
+        st.dataframe(cocok.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
         st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
 
     with tab2:
