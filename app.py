@@ -65,6 +65,7 @@ if excel_file and txt_file:
     
     # bersihkan yang tidak punya nopol
     df_txt = df_txt.dropna(subset=['NOPOL_NORMALIZED'])
+    df_txt = df_txt.drop(columns=['RAW_TEXT'])
     
     # ===============================
     # PERBANDINGAN + GABUNG DATA TXT
@@ -87,6 +88,31 @@ if excel_file and txt_file:
     ~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])
     ]
 
+    # ===============================
+    # HITUNG TARIF (HANYA SELISIH)
+    # ===============================
+    
+    kolom_tarif = [
+        'POKOK_SW', 'DENDA_SW',
+        'POKOK_1', 'DENDA_1',
+        'POKOK_2', 'DENDA_2',
+        'POKOK_3', 'DENDA_3',
+        'POKOK_4', 'DENDA_4',
+        'PRORATA'
+    ]
+    
+    # ubah ke numerik
+    for col in kolom_tarif:
+        if col in hanya_txt.columns:
+            hanya_txt[col] = pd.to_numeric(hanya_txt[col], errors='coerce').fillna(0)
+    
+    # total per baris (per NOPOL)
+    hanya_txt['TOTAL_NOPOL'] = hanya_txt[kolom_tarif].sum(axis=1)
+    
+    # total per kolom & grand total
+    total_per_kolom = hanya_txt[kolom_tarif].sum()
+    grand_total = hanya_txt['TOTAL_NOPOL'].sum()
+
     st.subheader("📊 Ringkasan")
     c1, c2, c3 = st.columns(3)
     c1.metric("Total Excel", len(df_excel))
@@ -94,9 +120,9 @@ if excel_file and txt_file:
     c3.metric("Cocok", len(cocok))
 
     tab1, tab2, tab3 = st.tabs([
-        "✅ Cocok",
-        "⚠️ Ada di Excel saja",
-        "⚠️ Ada di TXT saja"
+        "✅ Ada di Keduanya",
+        "⚠️ Ada di CERI saja",
+        "⚠️ Ada di Splitzing saja"
     ])
 
     with tab1:
@@ -106,7 +132,15 @@ if excel_file and txt_file:
         st.dataframe(hanya_excel)
 
     with tab3:
+    st.subheader("⚠️ Data hanya ada di TXT (Selisih)")
 
-        st.dataframe(hanya_txt)
+    st.dataframe(hanya_txt)
+
+    st.subheader("💰 Rekap Tarif (Hanya Selisih)")
+
+    st.write("**Total per Kolom:**")
+    st.dataframe(total_per_kolom.to_frame(name='TOTAL'))
+
+    st.metric("Grand Total Selisih", f"{grand_total:,.0f}")
 
 
