@@ -183,8 +183,9 @@ st.divider() # Garis pembatas tipis
 st.markdown(
     """
     <div style="text-align: center; color: #999; font-size: 12px; padding-bottom: 20px;">
-        © 2026 JR Aceh - Aplikasi Monitoring Selisih Nopol
+        Project 2026 oleh Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol
     </div>
     """, 
     unsafe_allow_html=True
 )
+
