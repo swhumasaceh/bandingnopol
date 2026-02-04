@@ -176,7 +176,7 @@ if excel_input and txt_input:
             st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
 
         with tab2:
-            st.subheader("⚠️ Ada di CERI (Excel) Tapi Tidak Ada di TXT")
+            st.subheader("⚠️ Ada di CERI (Excel) Tapi Tidak Ada di Splitzing")
             st.dataframe(hanya_excel, use_container_width=True)
             st.divider()
             st.subheader("💰 Rekapitulasi (Hanya di Excel)")
@@ -186,7 +186,7 @@ if excel_input and txt_input:
             e3.metric("Total (Jumlah)", f"Rp {hanya_excel['Jumlah'].sum():,.0f}")
 
         with tab3:
-            st.subheader("⚠️ Ada di Splitzing (TXT) Tapi Tidak Ada di Excel")
+            st.subheader("⚠️ Ada di Splitzing (Txt) Tapi Tidak Ada di CERI (Excel)")
             if not hanya_txt.empty:
                 txt_output = "\n".join(hanya_txt['RAW_TEXT'].tolist())
                 st.download_button(
@@ -199,7 +199,7 @@ if excel_input and txt_input:
             st.divider()
             st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
             st.divider()
-            st.subheader("💰 Rekapitulasi (Hanya di TXT)")
+            st.subheader("💰 Rekapitulasi (Nominal Splitzing Saja)")
             t1, t2, t3 = st.columns(3)
             t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
             t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
@@ -216,3 +216,4 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
+
