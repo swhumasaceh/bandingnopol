@@ -155,6 +155,7 @@ if excel_input or txt_input:
 
         # --- 4. TAMPILAN DASHBOARD ---
         st.subheader("📊 Ringkasan Perbandingan Data")
+        st.caption("Nominal yang tertulis pada ringkasan adalah Total Pengurangan Splitzing dan Excel, jadi harus double check ya!")
         
         sum_txt = df_txt['TOTAL_ALL_TXT'].sum() if not df_txt.empty else 0
         sum_excel = df_excel['Jumlah'].sum() if not df_excel.empty else 0
@@ -166,10 +167,10 @@ if excel_input or txt_input:
         gap_total = sum_txt - sum_excel
 
         m0, m1, m2, m3 = st.columns(4)
-        m0.metric("Total Nopol (TXT)", f"{len(df_txt)} Unit", f"Gap: {gap_nopol}")
-        m1.metric("Total Pokok (TXT)", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0", f"Gap: Rp {gap_pokok:,.0f}")
-        m2.metric("Total Denda (TXT)", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0", f"Gap: Rp {gap_denda:,.0f}")
-        m3.metric("Grand Total (TXT)", f"Rp {sum_txt:,.0f}", f"Gap vs Excel: Rp {gap_total:,.0f}", delta_color="inverse")
+        m0.metric("Total Nopol (Splitzing)", f"{len(df_txt)} Unit", f"Selisih: {gap_nopol}", delta_color="inverse")
+        m1.metric("Total Pokok (Splitzing)", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0", f"Selisih: Rp {gap_pokok:,.0f}", delta_color="inverse")
+        m2.metric("Total Denda (Splitzing)", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0", f"Selisih: Rp {gap_denda:,.0f}", delta_color="inverse")
+        m3.metric("Grand Total (Splitzing)", f"Rp {sum_txt:,.0f}", f"Selisih vs Excel: Rp {gap_total:,.0f}", delta_color="inverse")
         
         st.divider()
 
@@ -240,6 +241,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
