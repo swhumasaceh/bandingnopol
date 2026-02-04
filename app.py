@@ -6,10 +6,9 @@ import time
 st.set_page_config(page_title="Bandingkan Nopol Selisih JR Aceh", layout="wide")
 st.title("Aplikasi Perbandingan Nopol Selisih JR Aceh")
 
-# --- TAMBAHKAN SUBHEADER DI SINI ---
+# --- SUBHEADER ---
 st.subheader("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing, pastikan seluruh data yang diupload sudah rapi, khususnya file txt splitzing ya!")
 
-# (Opsional) Jika ingin garis pemisah agar lebih rapi
 st.divider()
 
 def extract_fixed(text, start, length):
@@ -36,7 +35,7 @@ with col2:
 if excel_file and txt_file:
     if st.button("Proses Data", use_container_width=True):
         with st.spinner('Sedang memproses dan menyelaraskan data...'):
-            time.sleep(2) 
+            time.sleep(2)  # Durasi loading
 
             # --- 1. PROSES EXCEL ---
             df_excel = pd.read_excel(excel_file, header=1)
@@ -68,9 +67,8 @@ if excel_file and txt_file:
 
             kolom_pokok_txt = ['POKOK_SW', 'POKOK_1', 'POKOK_2', 'POKOK_3', 'POKOK_4', 'PRORATA']
             kolom_denda_txt = ['DENDA_SW', 'DENDA_1', 'DENDA_2', 'DENDA_3', 'DENDA_4']
-            semua_kolom_txt = kolom_pokok_txt + kolom_denda_txt
-
-            for col in semua_kolom_txt:
+            
+            for col in (kolom_pokok_txt + kolom_denda_txt):
                 df_txt[col] = pd.to_numeric(df_txt[col], errors='coerce').fillna(0)
             
             df_txt['TOTAL_POKOK_TXT'] = df_txt[kolom_pokok_txt].sum(axis=1)
@@ -82,12 +80,10 @@ if excel_file and txt_file:
             hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])].copy()
             hanya_txt = df_txt[~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])].copy()
 
-            # Hitung Selisih
             cocok['SELISIH_CHECK'] = cocok['TOTAL_ALL_TXT'] - cocok['Jumlah']
 
             # --- 4. TAMPILAN DASHBOARD ---
             st.subheader("📊 Ringkasan Perbandingan Data")
-            
             gap_nopol = len(df_txt) - len(df_excel)
             gap_pokok = df_txt['TOTAL_POKOK_TXT'].sum() - df_excel['POKOK_EXCEL'].sum()
             gap_denda = df_txt['TOTAL_DENDA_TXT'].sum() - df_excel['DD'].sum()
@@ -106,8 +102,6 @@ if excel_file and txt_file:
 
             with tab1:
                 st.subheader("✅ Data ditemukan di CERI dan Splitzing")
-                
-                # Daftar Teks Selisih di atas tabel
                 list_selisih = cocok[cocok['SELISIH_CHECK'] != 0]
                 if not list_selisih.empty:
                     st.error("🚨 **Ditemukan Perbedaan Nominal pada Nopol berikut:**")
@@ -117,15 +111,11 @@ if excel_file and txt_file:
                     st.success("🎉 Tidak ada perbedaan nominal pada nopol yang cocok.")
                 
                 st.divider()
-
-                # LOGIKA HIGHLIGHT WARNA BARIS
                 def highlight_diff(row):
                     return ['background-color: #ffcccc' if row.SELISIH_CHECK != 0 else '' for _ in row]
 
-                # Tampilkan tabel dengan highlight
                 df_display = cocok.drop(columns=['RAW_TEXT'], errors='ignore')
                 st.dataframe(df_display.style.apply(highlight_diff, axis=1), use_container_width=True)
-                
                 st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
 
             with tab2:
@@ -140,12 +130,21 @@ if excel_file and txt_file:
 
             with tab3:
                 st.subheader("⚠️ Ada di Splitzing (TXT) Tapi Tidak Ada di Excel")
-                st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
+                
+                # FITUR EXPORT TXT
+                if not hanya_txt.empty:
+                    txt_output = "\n".join(hanya_txt['RAW_TEXT'].tolist())
+                    st.download_button(
+                        label="📥 Download Baris TXT Asli (Data Selisih)",
+                        data=txt_output,
+                        file_name="selisih_splitzing_only.txt",
+                        mime="text/plain"
+                    )
+                
                 st.divider()
+                st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
                 st.subheader("💰 Rekapitulasi (Hanya di TXT)")
                 t1, t2, t3 = st.columns(3)
                 t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
                 t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
                 t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
-
-
