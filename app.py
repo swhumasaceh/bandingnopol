@@ -145,7 +145,7 @@ if excel_input or txt_input:
     if st.button("Cari Selisih", use_container_width=True):
         st.session_state.proses_selesai = True
     
-    if st.session_state.proses_selesai
+    if st.session_state.proses_selesai:
         with st.spinner('Memproses data...'):
             cocok, hanya_excel, hanya_txt, df_txt, df_excel = proses_data_audit(excel_input, txt_input)
 
@@ -240,5 +240,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
