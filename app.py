@@ -29,7 +29,6 @@ def normalize_nopol(text):
     return None
 
 # --- FUNGSI PROSES DENGAN CACHE ---
-# Ini rahasianya supaya data tidak hilang saat halaman rerun/refresh
 @st.cache_data(show_spinner=False)
 def proses_data_audit(excel_file, txt_file):
     # 1. PROSES EXCEL
@@ -85,18 +84,28 @@ with col1:
 with col2:
     txt_input = st.file_uploader("Upload TXT (Splitzing)", type=["txt"])
 
-# Inisialisasi status proses agar data tidak hilang saat klik download
-if 'proses_selesai' not in st.session_state:
-    st.session_state.proses_selesai = False
+# --- LOGIKA AUTO-RESET SAAT UPLOAD BARU ---
+if 'file_excel_name' not in st.session_state: st.session_state.file_excel_name = None
+if 'file_txt_name' not in st.session_state: st.session_state.file_txt_name = None
+if 'proses_selesai' not in st.session_state: st.session_state.proses_selesai = False
+
+# Cek apakah nama file yang diupload berbeda dengan yang ada di memori
+current_excel_name = excel_input.name if excel_input else None
+current_txt_name = txt_input.name if txt_input else None
+
+if current_excel_name != st.session_state.file_excel_name or current_txt_name != st.session_state.file_txt_name:
+    st.session_state.proses_selesai = False  # Reset tampilan ke awal
+    st.session_state.file_excel_name = current_excel_name
+    st.session_state.file_txt_name = current_txt_name
+    # Optional: Bersihkan cache agar data benar-benar baru
+    st.cache_data.clear()
 
 if excel_input and txt_input:
-    # Jika tombol ditekan, ubah status menjadi True
+    # Tombol akan muncul kembali jika file diubah
     if st.button("Proses Data", use_container_width=True):
         st.session_state.proses_selesai = True
     
-    # Tampilkan hasil hanya jika tombol sudah pernah diklik
     if st.session_state.proses_selesai:
-        # Spinner hanya muncul saat pertama kali hitung, selanjutnya ambil dari cache
         with st.spinner('Menyelaraskan data...'):
             cocok, hanya_excel, hanya_txt, df_txt, df_excel = proses_data_audit(excel_input, txt_input)
 
@@ -121,7 +130,6 @@ if excel_input and txt_input:
 
         with tab1:
             st.subheader("✅ Data ditemukan di CERI dan Splitzing")
-            
             list_selisih = cocok[cocok['SELISIH_CHECK'] != 0]
             if not list_selisih.empty:
                 st.error("🚨 **Ditemukan Perbedaan Nominal pada Nopol berikut:**")
@@ -151,8 +159,6 @@ if excel_input and txt_input:
 
         with tab3:
             st.subheader("⚠️ Ada di Splitzing (TXT) Tapi Tidak Ada di Excel")
-            
-            # --- FITUR DOWNLOAD TXT ---
             if not hanya_txt.empty:
                 txt_output = "\n".join(hanya_txt['RAW_TEXT'].tolist())
                 st.download_button(
@@ -170,5 +176,3 @@ if excel_input and txt_input:
             t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
             t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
             t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
-
-
