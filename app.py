@@ -3,6 +3,34 @@ import pandas as pd
 import re
 import time
 
+# --- CUSTOM CSS UNTUK TOMBOL DOWNLOAD HIJAU ---
+st.markdown("""
+    <style>
+    /* Menargetkan tombol download (st.download_button) */
+    .stDownloadButton > button {
+        background-color: #28a745; /* Warna hijau */
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.3rem;
+        transition: 0.3s;
+    }
+    
+    /* Efek saat kursor di atas tombol (hover) */
+    .stDownloadButton > button:hover {
+        background-color: #218838; /* Hijau lebih gelap saat di-hover */
+        color: white;
+        border: none;
+    }
+
+    /* Memastikan teks tetap putih saat ditekan */
+    .stDownloadButton > button:active {
+        background-color: #1e7e34;
+        color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.set_page_config(page_title="Bandingkan Nopol Selisih JR Aceh", layout="wide")
 st.title("Aplikasi Perbandingan Nopol Selisih JR Aceh")
 
@@ -188,4 +216,5 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
+
 
