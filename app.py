@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
+import time
 
 st.set_page_config(page_title="Bandingkan Nopol Selisih JR Aceh", layout="wide")
 st.title("Aplikasi Perbandingan Nopol Selisih JR Aceh")
@@ -26,108 +27,110 @@ with col1:
 with col2:
     txt_file = st.file_uploader("Upload TXT (Splitzing)", type=["txt"])
 
+# Tombol Proses ditempatkan setelah upload file
 if excel_file and txt_file:
-    # --- 1. PROSES EXCEL ---
-    df_excel = pd.read_excel(excel_file, header=1)
-    df_excel = df_excel.dropna(subset=['No Polisi'])
-    df_excel['NOPOL_NORMALIZED'] = df_excel['No Polisi'].apply(normalize_nopol)
-    
-    for col in ['KD', 'SW', 'DD', 'Jumlah']:
-        df_excel[col] = pd.to_numeric(df_excel[col], errors='coerce').fillna(0)
-    df_excel['POKOK_EXCEL'] = df_excel['KD'] + df_excel['SW']
+    if st.button("🚀 Proses Perbandingan Data", use_container_width=True):
+        with st.spinner('Sedang memproses dan menyelaraskan data, mohon tunggu...'):
+            # Simulasi loading sejenak agar user melihat indikator
+            time.sleep(1) 
 
-    # --- 2. PROSES TXT ---
-    content = txt_file.read().decode("utf-8", errors="ignore")
-    lines = [l for l in content.splitlines() if "BL" in l]
-    df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
-    df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
+            # --- 1. PROSES EXCEL ---
+            df_excel = pd.read_excel(excel_file, header=1)
+            df_excel = df_excel.dropna(subset=['No Polisi'])
+            df_excel['NOPOL_NORMALIZED'] = df_excel['No Polisi'].apply(normalize_nopol)
+            
+            for col in ['KD', 'SW', 'DD', 'Jumlah']:
+                df_excel[col] = pd.to_numeric(df_excel[col], errors='coerce').fillna(0)
+            df_excel['POKOK_EXCEL'] = df_excel['KD'] + df_excel['SW']
 
-    # Ekstraksi kolom TXT
-    df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
-    df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
-    df_txt['POKOK_1']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 104, 7))
-    df_txt['DENDA_1']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 111, 7))
-    df_txt['POKOK_2']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 118, 7))
-    df_txt['DENDA_2']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 125, 7))
-    df_txt['POKOK_3']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 132, 7))
-    df_txt['DENDA_3']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 139, 7))
-    df_txt['POKOK_4']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 146, 7))
-    df_txt['DENDA_4']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 153, 7))
-    df_txt['PRORATA']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 160, 7))
+            # --- 2. PROSES TXT ---
+            content = txt_file.read().decode("utf-8", errors="ignore")
+            lines = [l for l in content.splitlines() if "BL" in l]
+            df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
+            df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
 
-    kolom_pokok_txt = ['POKOK_SW', 'POKOK_1', 'POKOK_2', 'POKOK_3', 'POKOK_4', 'PRORATA']
-    kolom_denda_txt = ['DENDA_SW', 'DENDA_1', 'DENDA_2', 'DENDA_3', 'DENDA_4']
-    semua_kolom_txt = kolom_pokok_txt + kolom_denda_txt
+            # Ekstraksi kolom TXT
+            df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
+            df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
+            df_txt['POKOK_1']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 104, 7))
+            df_txt['DENDA_1']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 111, 7))
+            df_txt['POKOK_2']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 118, 7))
+            df_txt['DENDA_2']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 125, 7))
+            df_txt['POKOK_3']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 132, 7))
+            df_txt['DENDA_3']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 139, 7))
+            df_txt['POKOK_4']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 146, 7))
+            df_txt['DENDA_4']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 153, 7))
+            df_txt['PRORATA']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 160, 7))
 
-    for col in semua_kolom_txt:
-        df_txt[col] = pd.to_numeric(df_txt[col], errors='coerce').fillna(0)
-    
-    df_txt['TOTAL_POKOK_TXT'] = df_txt[kolom_pokok_txt].sum(axis=1)
-    df_txt['TOTAL_DENDA_TXT'] = df_txt[kolom_denda_txt].sum(axis=1)
-    df_txt['TOTAL_ALL_TXT'] = df_txt['TOTAL_POKOK_TXT'] + df_txt['TOTAL_DENDA_TXT']
+            kolom_pokok_txt = ['POKOK_SW', 'POKOK_1', 'POKOK_2', 'POKOK_3', 'POKOK_4', 'PRORATA']
+            kolom_denda_txt = ['DENDA_SW', 'DENDA_1', 'DENDA_2', 'DENDA_3', 'DENDA_4']
+            semua_kolom_txt = kolom_pokok_txt + kolom_denda_txt
 
-    # --- 3. LOGIKA PERBANDINGAN ---
-    cocok = df_excel.merge(df_txt, on='NOPOL_NORMALIZED', how='inner').copy()
-    hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])].copy()
-    hanya_txt = df_txt[~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])].copy()
+            for col in semua_kolom_txt:
+                df_txt[col] = pd.to_numeric(df_txt[col], errors='coerce').fillna(0)
+            
+            df_txt['TOTAL_POKOK_TXT'] = df_txt[kolom_pokok_txt].sum(axis=1)
+            df_txt['TOTAL_DENDA_TXT'] = df_txt[kolom_denda_txt].sum(axis=1)
+            df_txt['TOTAL_ALL_TXT'] = df_txt['TOTAL_POKOK_TXT'] + df_txt['TOTAL_DENDA_TXT']
 
-    # Hitung Selisih
-    cocok['SELISIH_CHECK'] = cocok['TOTAL_ALL_TXT'] - cocok['Jumlah']
+            # --- 3. LOGIKA PERBANDINGAN ---
+            cocok = df_excel.merge(df_txt, on='NOPOL_NORMALIZED', how='inner').copy()
+            hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])].copy()
+            hanya_txt = df_txt[~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])].copy()
 
-    # --- 4. RINGKASAN DASHBOARD ---
-    st.subheader("📊 Ringkasan Perbandingan Data")
-    
-    gap_nopol = len(df_txt) - len(df_excel)
-    gap_pokok = df_txt['TOTAL_POKOK_TXT'].sum() - df_excel['POKOK_EXCEL'].sum()
-    gap_denda = df_txt['TOTAL_DENDA_TXT'].sum() - df_excel['DD'].sum()
-    gap_total = df_txt['TOTAL_ALL_TXT'].sum() - df_excel['Jumlah'].sum()
+            # Hitung Selisih
+            cocok['SELISIH_CHECK'] = cocok['TOTAL_ALL_TXT'] - cocok['Jumlah']
 
-    m0, m1, m2, m3 = st.columns(4)
-    m0.metric("Total Nopol", f"{len(df_txt)} Unit", f"Nopol Selisih: {gap_nopol}", delta_color="inverse")
-    m1.metric("Total Pokok", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}", f"Selisih: Rp {gap_pokok:,.0f}", delta_color="inverse")
-    m2.metric("Total Denda", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}", f"Selisih: Rp {gap_denda:,.0f}", delta_color="inverse")
-    m3.metric("Grand Total", f"Rp {df_txt['TOTAL_ALL_TXT'].sum():,.0f}", f"Selisih: Rp {gap_total:,.0f}", delta_color="inverse")
-    
-    st.divider()
+            # --- 4. TAMPILAN DASHBOARD ---
+            st.subheader("📊 Ringkasan Perbandingan Data")
+            
+            gap_nopol = len(df_txt) - len(df_excel)
+            gap_pokok = df_txt['TOTAL_POKOK_TXT'].sum() - df_excel['POKOK_EXCEL'].sum()
+            gap_denda = df_txt['TOTAL_DENDA_TXT'].sum() - df_excel['DD'].sum()
+            gap_total = df_txt['TOTAL_ALL_TXT'].sum() - df_excel['Jumlah'].sum()
 
-    # --- 5. TAMPILAN TAB ---
-    tab1, tab2, tab3 = st.tabs(["✅ Ada di Keduanya", "⚠️ Ada di CERI saja", "⚠️ Ada di Splitzing saja"])
+            m0, m1, m2, m3 = st.columns(4)
+            m0.metric("Total Nopol", f"{len(df_txt)} Unit", f"Gap: {gap_nopol}", delta_color="inverse")
+            m1.metric("Total Pokok", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}", f"Gap: Rp {gap_pokok:,.0f}", delta_color="inverse")
+            m2.metric("Total Denda", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}", f"Gap: Rp {gap_denda:,.0f}", delta_color="inverse")
+            m3.metric("Grand Total", f"Rp {df_txt['TOTAL_ALL_TXT'].sum():,.0f}", f"Gap: Rp {gap_total:,.0f}", delta_color="inverse")
+            
+            st.divider()
 
-    with tab1:
-        st.subheader("✅ Data ditemukan di CERI dan Splitzing")
-        
-        # --- DAFTAR TEKS SELISIH ---
-        list_selisih = cocok[cocok['SELISIH_CHECK'] != 0]
-        if not list_selisih.empty:
-            st.error("🚨 **Ditemukan Perbedaan Nominal pada Nopol berikut:**")
-            for _, row in list_selisih.iterrows():
-                st.write(f"👉 **{row['No Polisi']}** - Selisih: Rp {row['SELISIH_CHECK']:,.0f}")
-        else:
-            st.success("🎉 Tidak ada perbedaan nominal pada nopol yang cocok.")
-        
-        st.divider()
+            # --- 5. TAMPILAN TAB ---
+            tab1, tab2, tab3 = st.tabs(["✅ Ada di Keduanya", "⚠️ Ada di CERI saja", "⚠️ Ada di Splitzing saja"])
 
-        # Tampilkan tabel tanpa RAW_TEXT dan tanpa styling/pindah kolom
-        st.dataframe(cocok.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
-        st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
+            with tab1:
+                st.subheader("✅ Data ditemukan di CERI dan Splitzing")
+                
+                list_selisih = cocok[cocok['SELISIH_CHECK'] != 0]
+                if not list_selisih.empty:
+                    st.error("🚨 **Ditemukan Perbedaan Nominal pada Nopol berikut:**")
+                    for _, row in list_selisih.iterrows():
+                        st.write(f"👉 **{row['No Polisi']}** - Selisih: Rp {row['SELISIH_CHECK']:,.0f}")
+                else:
+                    st.success("🎉 Tidak ada perbedaan nominal pada nopol yang cocok.")
+                
+                st.divider()
+                st.dataframe(cocok.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
+                st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
 
-    with tab2:
-        st.subheader("⚠️ Ada di CERI (Excel) Tapi Tidak Ada di TXT")
-        st.dataframe(hanya_excel, use_container_width=True)
-        st.divider()
-        st.subheader("💰 Rekapitulasi (Hanya di Excel)")
-        e1, e2, e3 = st.columns(3)
-        e1.metric("Pokok (KD+SW)", f"Rp {hanya_excel['POKOK_EXCEL'].sum():,.0f}")
-        e2.metric("Denda (DD)", f"Rp {hanya_excel['DD'].sum():,.0f}")
-        e3.metric("Total (Jumlah)", f"Rp {hanya_excel['Jumlah'].sum():,.0f}")
+            with tab2:
+                st.subheader("⚠️ Ada di CERI (Excel) Tapi Tidak Ada di TXT")
+                st.dataframe(hanya_excel, use_container_width=True)
+                st.divider()
+                st.subheader("💰 Rekapitulasi (Hanya di Excel)")
+                e1, e2, e3 = st.columns(3)
+                e1.metric("Pokok (KD+SW)", f"Rp {hanya_excel['POKOK_EXCEL'].sum():,.0f}")
+                e2.metric("Denda (DD)", f"Rp {hanya_excel['DD'].sum():,.0f}")
+                e3.metric("Total (Jumlah)", f"Rp {hanya_excel['Jumlah'].sum():,.0f}")
 
-    with tab3:
-        st.subheader("⚠️ Ada di Splitzing (TXT) Tapi Tidak Ada di Excel")
-        st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
-        st.divider()
-        st.subheader("💰 Rekapitulasi (Hanya di TXT)")
-        t1, t2, t3 = st.columns(3)
-        t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
-        t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
-        t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
-
+            with tab3:
+                st.subheader("⚠️ Ada di Splitzing (TXT) Tapi Tidak Ada di Excel")
+                st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
+                st.divider()
+                st.subheader("💰 Rekapitulasi (Hanya di TXT)")
+                t1, t2, t3 = st.columns(3)
+                t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
+                t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
+                t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
