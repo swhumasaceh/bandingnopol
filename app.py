@@ -153,7 +153,44 @@ if excel_file and txt_file:
         st.table(hanya_txt[semua_kolom].sum().to_frame(name='Total (Rp)'))
 
     with tab2:
+        st.subheader("⚠️ Data hanya ada di CERI (Excel)")
+        
+        # --- LOGIKA PERHITUNGAN KHUSUS EXCEL ---
+        # 1. Pastikan kolom Excel dikonversi ke numerik agar bisa dijumlahkan
+        kolom_hitung_excel = ['KD', 'SW', 'DD', 'Jumlah']
+        for col in kolom_hitung_excel:
+            if col in hanya_excel.columns:
+                hanya_excel[col] = pd.to_numeric(hanya_excel[col], errors='coerce').fillna(0)
+        
+        # 2. Hitung Pokok (KD + SW) per baris
+        if 'KD' in hanya_excel.columns and 'SW' in hanya_excel.columns:
+            hanya_excel['TOTAL_POKOK_EX'] = hanya_excel['KD'] + hanya_excel['SW']
+        else:
+            hanya_excel['TOTAL_POKOK_EX'] = 0
+
+        # 3. Hitung Grand Total untuk metrik dashboard
+        total_pokok_ex = hanya_excel['TOTAL_POKOK_EX'].sum()
+        total_denda_ex = hanya_excel['DD'].sum() if 'DD' in hanya_excel.columns else 0
+        total_jumlah_ex = hanya_excel['Jumlah'].sum() if 'Jumlah' in hanya_excel.columns else 0
+        
+        # --- TAMPILAN ---
         st.dataframe(hanya_excel)
+        
+        st.divider()
+        st.subheader("💰 Rekapitulasi Tarif (Hanya di Excel)")
+        
+        # Tampilan metrik angka besar
+        m_ex1, m_ex2, m_ex3 = st.columns(3)
+        m_ex1.metric("Total Pokok (KD+SW)", f"Rp {total_pokok_ex:,.0f}")
+        m_ex2.metric("Total Denda (DD)", f"Rp {total_denda_ex:,.0f}")
+        m_ex3.metric("Grand Total (Jumlah)", f"Rp {total_jumlah_ex:,.0f}")
+
+        # Tabel rincian akumulasi
+        rekap_ex = pd.DataFrame({
+            "Kategori": ["Pokok (KD+SW)", "Denda (DD)", "Total Keseluruhan"],
+            "Nilai": [total_pokok_ex, total_denda_ex, total_jumlah_ex]
+        })
+        st.table(rekap_ex.set_index("Kategori"))
 
     with tab3:
         st.subheader("✅ Data ditemukan di CERI dan Splitzing")
@@ -170,4 +207,5 @@ if excel_file and txt_file:
         
         st.write("**Detail Akumulasi per Kolom (Cocok):**")
         st.table(cocok[semua_kolom].sum().to_frame(name='Total (Rp)'))
+
 
