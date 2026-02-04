@@ -177,7 +177,7 @@ if excel_input and txt_input:
             t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
             t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
 
-    # --- FOOTER MINIMALIS (Tambahkan di baris paling bawah) ---
+    # --- FOOTER MINIMALIS TETAP DI BAWAH ---
     st.markdown("""
         <style>
         .main-footer {
@@ -190,7 +190,7 @@ if excel_input and txt_input:
             padding: 5px;
             font-size: 12px;
             z-index: 100;
-            background: transparent;
+            background-color: white; /* Menghindari tabrakan visual saat scrolling */
         }
         </style>
         <div class="main-footer">
