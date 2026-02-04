@@ -177,23 +177,13 @@ if excel_input and txt_input:
             t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
             t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
 
-    # --- FOOTER MINIMALIS TETAP DI BAWAH ---
-    st.markdown("""
-        <style>
-        .main-footer {
-            position: fixed;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            color: #999;
-            text-align: center;
-            padding: 5px;
-            font-size: 12px;
-            z-index: 100;
-            background-color: white; /* Menghindari tabrakan visual saat scrolling */
-        }
-        </style>
-        <div class="main-footer">
-            <p>2026 Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol</p>
+    # --- FOOTER STATIS (Hanya muncul di akhir halaman setelah scroll) ---
+    st.divider() # Garis pembatas sebelum footer
+    st.markdown(
+        """
+        <div style="text-align: center; color: #999; font-size: 12px; padding-bottom: 20px;">
+            © 2026 Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol
         </div>
-    """, unsafe_allow_html=True)
+        """, 
+        unsafe_allow_html=True
+    )
