@@ -27,11 +27,9 @@ with col1:
 with col2:
     txt_file = st.file_uploader("Upload TXT (Splitzing)", type=["txt"])
 
-# Tombol Proses ditempatkan setelah upload file
 if excel_file and txt_file:
     if st.button("🚀 Proses Perbandingan Data", use_container_width=True):
-        with st.spinner('Sedang memproses dan menyelaraskan data, mohon tunggu...'):
-            # Simulasi loading sejenak agar user melihat indikator
+        with st.spinner('Sedang memproses dan menyelaraskan data...'):
             time.sleep(1) 
 
             # --- 1. PROSES EXCEL ---
@@ -103,6 +101,7 @@ if excel_file and txt_file:
             with tab1:
                 st.subheader("✅ Data ditemukan di CERI dan Splitzing")
                 
+                # Daftar Teks Selisih di atas tabel
                 list_selisih = cocok[cocok['SELISIH_CHECK'] != 0]
                 if not list_selisih.empty:
                     st.error("🚨 **Ditemukan Perbedaan Nominal pada Nopol berikut:**")
@@ -112,7 +111,15 @@ if excel_file and txt_file:
                     st.success("🎉 Tidak ada perbedaan nominal pada nopol yang cocok.")
                 
                 st.divider()
-                st.dataframe(cocok.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
+
+                # LOGIKA HIGHLIGHT WARNA BARIS
+                def highlight_diff(row):
+                    return ['background-color: #ffcccc' if row.SELISIH_CHECK != 0 else '' for _ in row]
+
+                # Tampilkan tabel dengan highlight
+                df_display = cocok.drop(columns=['RAW_TEXT'], errors='ignore')
+                st.dataframe(df_display.style.apply(highlight_diff, axis=1), use_container_width=True)
+                
                 st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
 
             with tab2:
