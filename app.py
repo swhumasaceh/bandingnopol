@@ -81,6 +81,54 @@ if excel_file and txt_file:
     
     # Hanya di TXT (Gunakan .copy() agar tidak error saat hitung tarif)
     hanya_txt = df_txt[~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])].copy()
+    
+    # ===============================
+    # LOGIKA PERHITUNGAN TARIF
+    # ===============================
+    
+    kolom_pokok = ['POKOK_SW', 'POKOK_1', 'POKOK_2', 'POKOK_3', 'POKOK_4', 'PRORATA']
+    kolom_denda = ['DENDA_SW', 'DENDA_1', 'DENDA_2', 'DENDA_3', 'DENDA_4']
+    semua_kolom = kolom_pokok + kolom_denda
+    
+    # Konversi ke numerik
+    for col in semua_kolom:
+        if col in hanya_txt.columns:
+            hanya_txt[col] = pd.to_numeric(hanya_txt[col], errors='coerce').fillna(0)
+    
+    # Hitung total per baris
+    hanya_txt['TOTAL_POKOK'] = hanya_txt[kolom_pokok].sum(axis=1)
+    hanya_txt['TOTAL_DENDA'] = hanya_txt[kolom_denda].sum(axis=1)
+    hanya_txt['GRAND_TOTAL'] = hanya_txt['TOTAL_POKOK'] + hanya_txt['TOTAL_DENDA']
+    
+    # Hitung total akhir
+    total_pokok_akhir = hanya_txt['TOTAL_POKOK'].sum()
+    total_denda_akhir = hanya_txt['TOTAL_DENDA'].sum()
+    grand_total_semua = hanya_txt['GRAND_TOTAL'].sum()
+
+    # Konversi kolom keuangan di dataframe 'cocok'
+    for col in semua_kolom:
+        if col in cocok.columns:
+            cocok[col] = pd.to_numeric(cocok[col], errors='coerce').fillna(0)
+
+    # Hitung total per baris untuk data yang cocok
+    cocok['TOTAL_POKOK'] = cocok[kolom_pokok].sum(axis=1)
+    cocok['TOTAL_DENDA'] = cocok[kolom_denda].sum(axis=1)
+    cocok['GRAND_TOTAL'] = cocok['TOTAL_POKOK'] + cocok['TOTAL_DENDA']
+
+    # Hitung total akhir untuk ringkasan tab cocok
+    total_pokok_cocok = cocok['TOTAL_POKOK'].sum()
+    total_denda_cocok = cocok['TOTAL_DENDA'].sum()
+    grand_total_cocok = cocok['GRAND_TOTAL'].sum()
+
+    # ===============================
+    # TAMPILAN DASHBOARD
+    # ===============================
+
+    st.subheader("📊 Ringkasan Perbandingan Data")
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Total Excel", len(df_excel))
+    c2.metric("Total TXT", len(df_txt))
+    c3.metric("Cocok", len(cocok))
 
     # ===============================
     # 1. PERHITUNGAN TOTAL RINGKASAN
@@ -142,54 +190,6 @@ if excel_file and txt_file:
     )
     
     st.divider()
-    
-    # ===============================
-    # LOGIKA PERHITUNGAN TARIF
-    # ===============================
-    
-    kolom_pokok = ['POKOK_SW', 'POKOK_1', 'POKOK_2', 'POKOK_3', 'POKOK_4', 'PRORATA']
-    kolom_denda = ['DENDA_SW', 'DENDA_1', 'DENDA_2', 'DENDA_3', 'DENDA_4']
-    semua_kolom = kolom_pokok + kolom_denda
-    
-    # Konversi ke numerik
-    for col in semua_kolom:
-        if col in hanya_txt.columns:
-            hanya_txt[col] = pd.to_numeric(hanya_txt[col], errors='coerce').fillna(0)
-    
-    # Hitung total per baris
-    hanya_txt['TOTAL_POKOK'] = hanya_txt[kolom_pokok].sum(axis=1)
-    hanya_txt['TOTAL_DENDA'] = hanya_txt[kolom_denda].sum(axis=1)
-    hanya_txt['GRAND_TOTAL'] = hanya_txt['TOTAL_POKOK'] + hanya_txt['TOTAL_DENDA']
-    
-    # Hitung total akhir
-    total_pokok_akhir = hanya_txt['TOTAL_POKOK'].sum()
-    total_denda_akhir = hanya_txt['TOTAL_DENDA'].sum()
-    grand_total_semua = hanya_txt['GRAND_TOTAL'].sum()
-
-    # Konversi kolom keuangan di dataframe 'cocok'
-    for col in semua_kolom:
-        if col in cocok.columns:
-            cocok[col] = pd.to_numeric(cocok[col], errors='coerce').fillna(0)
-
-    # Hitung total per baris untuk data yang cocok
-    cocok['TOTAL_POKOK'] = cocok[kolom_pokok].sum(axis=1)
-    cocok['TOTAL_DENDA'] = cocok[kolom_denda].sum(axis=1)
-    cocok['GRAND_TOTAL'] = cocok['TOTAL_POKOK'] + cocok['TOTAL_DENDA']
-
-    # Hitung total akhir untuk ringkasan tab cocok
-    total_pokok_cocok = cocok['TOTAL_POKOK'].sum()
-    total_denda_cocok = cocok['TOTAL_DENDA'].sum()
-    grand_total_cocok = cocok['GRAND_TOTAL'].sum()
-
-    # ===============================
-    # TAMPILAN DASHBOARD
-    # ===============================
-
-    st.subheader("📊 Ringkasan Perbandingan Data")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Total Excel", len(df_excel))
-    c2.metric("Total TXT", len(df_txt))
-    c3.metric("Cocok", len(cocok))
 
     tab1, tab2, tab3 = st.tabs([
         "⚠️ Ada di Splitzing saja",
@@ -268,6 +268,7 @@ if excel_file and txt_file:
         
         st.write("**Detail Akumulasi per Kolom (Cocok):**")
         st.table(cocok[semua_kolom].sum().to_frame(name='Total (Rp)'))
+
 
 
 
