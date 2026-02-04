@@ -28,9 +28,9 @@ with col2:
     txt_file = st.file_uploader("Upload TXT (Splitzing)", type=["txt"])
 
 if excel_file and txt_file:
-    if st.button("🚀 Proses Perbandingan Data", use_container_width=True):
+    if st.button("Proses Data", use_container_width=True):
         with st.spinner('Sedang memproses dan menyelaraskan data...'):
-            time.sleep(1) 
+            time.sleep(2) 
 
             # --- 1. PROSES EXCEL ---
             df_excel = pd.read_excel(excel_file, header=1)
@@ -88,10 +88,10 @@ if excel_file and txt_file:
             gap_total = df_txt['TOTAL_ALL_TXT'].sum() - df_excel['Jumlah'].sum()
 
             m0, m1, m2, m3 = st.columns(4)
-            m0.metric("Total Nopol", f"{len(df_txt)} Unit", f"Gap: {gap_nopol}", delta_color="inverse")
-            m1.metric("Total Pokok", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}", f"Gap: Rp {gap_pokok:,.0f}", delta_color="inverse")
-            m2.metric("Total Denda", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}", f"Gap: Rp {gap_denda:,.0f}", delta_color="inverse")
-            m3.metric("Grand Total", f"Rp {df_txt['TOTAL_ALL_TXT'].sum():,.0f}", f"Gap: Rp {gap_total:,.0f}", delta_color="inverse")
+            m0.metric("Total Nopol", f"{len(df_txt)} Unit", f"Selisih Nopol: {gap_nopol}", delta_color="inverse")
+            m1.metric("Total Pokok", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}", f"Selisih: Rp {gap_pokok:,.0f}", delta_color="inverse")
+            m2.metric("Total Denda", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}", f"Selisih: Rp {gap_denda:,.0f}", delta_color="inverse")
+            m3.metric("Grand Total", f"Rp {df_txt['TOTAL_ALL_TXT'].sum():,.0f}", f"Selisih: Rp {gap_total:,.0f}", delta_color="inverse")
             
             st.divider()
 
@@ -141,3 +141,4 @@ if excel_file and txt_file:
                 t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
                 t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
                 t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
+
