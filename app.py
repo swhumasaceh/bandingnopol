@@ -71,19 +71,12 @@ if excel_file and txt_file:
     hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])].copy()
     hanya_txt = df_txt[~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])].copy()
 
-    # Hitung Selisih
+    # Tambahkan Cek Selisih Rupiah di Data yang Cocok
     cocok['SELISIH_CHECK'] = cocok['TOTAL_ALL_TXT'] - cocok['Jumlah']
-
-    # PINDAHKAN KOLOM KE DEPAN (Setelah No Polisi)
-    cols = cocok.columns.tolist()
-    # No Polisi biasanya ada di index awal, kita pindahkan SELISIH_CHECK ke index 1 atau 2
-    if 'No Polisi' in cols:
-        idx = cols.index('No Polisi') + 1
-        cols.insert(idx, cols.pop(cols.index('SELISIH_CHECK')))
-        cocok = cocok[cols]
 
     # --- 4. RINGKASAN DASHBOARD ---
     st.subheader("📊 Ringkasan Perbandingan Data")
+    st.caption("ℹ️ **Gap** = (Total Semua TXT) - (Total Semua Excel). Warna merah berarti ada perbedaan data.")
     
     gap_nopol = len(df_txt) - len(df_excel)
     gap_pokok = df_txt['TOTAL_POKOK_TXT'].sum() - df_excel['POKOK_EXCEL'].sum()
@@ -103,15 +96,8 @@ if excel_file and txt_file:
 
     with tab1:
         st.subheader("✅ Data ditemukan di CERI dan Splitzing")
-        
-        # Fungsi untuk highlight baris yang selisih
-        def highlight_diff(s):
-            return ['background-color: #ffcccc' if s.SELISIH_CHECK != 0 else '' for _ in s]
-
-        # Tampilkan tabel dengan style
-        df_display_cocok = cocok.drop(columns=['RAW_TEXT'], errors='ignore')
-        st.dataframe(df_display_cocok.style.apply(highlight_diff, axis=1))
-        
+        # Menghapus RAW_TEXT sebelum ditampilkan
+        st.dataframe(cocok.drop(columns=['RAW_TEXT'], errors='ignore'))
         st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
 
     with tab2:
@@ -126,6 +112,7 @@ if excel_file and txt_file:
 
     with tab3:
         st.subheader("⚠️ Ada di Splitzing (TXT) Tapi Tidak Ada di Excel")
+        # Menghapus RAW_TEXT sebelum ditampilkan
         st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'))
         st.divider()
         st.subheader("💰 Rekapitulasi (Hanya di TXT)")
