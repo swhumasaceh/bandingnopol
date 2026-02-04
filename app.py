@@ -6,19 +6,24 @@ import time
 # --- CUSTOM CSS UNTUK TOMBOL HIJAU ---
 st.markdown("""
     <style>
+    /* Menargetkan semua tombol (Proses Data & Download) */
     .stButton > button, .stDownloadButton > button {
-        background-color: #28a745 !important; 
+        background-color: #28a745 !important; /* Warna hijau */
         color: white !important;
         border: none;
         padding: 0.5rem 1rem;
         border-radius: 0.3rem;
         transition: 0.3s;
-        width: 100%; 
+        width: 100%; /* Agar tombol Proses Data tetap selebar kontainer */
     }
+    
+    /* Efek hover untuk semua tombol */
     .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #218838 !important;
         color: white !important;
     }
+
+    /* Menghilangkan border merah/biru bawaan streamlit saat diklik */
     .stButton > button:focus, .stDownloadButton > button:focus {
         box-shadow: none !important;
         color: white !important;
@@ -29,7 +34,10 @@ st.markdown("""
 st.set_page_config(page_title="Bandingkan Nopol Selisih JR Aceh", layout="wide")
 st.title("Aplikasi Perbandingan Nopol Selisih JR Aceh")
 
-st.caption("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing.")
+# --- CAPTION ---
+st.caption("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing, pastikan seluruh data yang diupload sudah rapi, khususnya file txt splitzing ya!")
+st.caption("Untuk file Excel CERI, masuk ke Monitoring > TIK > Penerimaan Per Nopol > Pilih Samsat dan Tanggal > Show ALL entries > Export")
+
 st.divider()
 
 # --- FUNGSI TOOLS ---
@@ -48,7 +56,7 @@ def normalize_nopol(text):
         return re.sub(r'[^A-Z0-9]', '', match.group())
     return None
 
-# --- FUNGSI PROSES ---
+# --- FUNGSI PROSES DENGAN CACHE ---
 @st.cache_data(show_spinner=False)
 def proses_data_audit(excel_file, txt_file):
     df_excel = pd.DataFrame()
@@ -57,21 +65,23 @@ def proses_data_audit(excel_file, txt_file):
     hanya_excel = pd.DataFrame()
     hanya_txt = pd.DataFrame()
 
+    # 1. PROSES EXCEL (Jika ada)
     if excel_file is not None:
         df_excel = pd.read_excel(excel_file, header=1)
         df_excel = df_excel.dropna(subset=['No Polisi'])
         df_excel['NOPOL_NORMALIZED'] = df_excel['No Polisi'].apply(normalize_nopol)
+        
         for col in ['KD', 'SW', 'DD', 'Jumlah']:
             df_excel[col] = pd.to_numeric(df_excel[col], errors='coerce').fillna(0)
         df_excel['POKOK_EXCEL'] = df_excel['KD'] + df_excel['SW']
 
+    # 2. PROSES TXT (Jika ada)
     if txt_file is not None:
         content = txt_file.read().decode("utf-8", errors="ignore")
         lines = [l for l in content.splitlines() if "BL" in l]
         df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
         df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
-        
-        # Ekstraksi data TXT
+
         df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
         df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
         df_txt['POKOK_1']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 104, 7))
@@ -84,17 +94,18 @@ def proses_data_audit(excel_file, txt_file):
         df_txt['DENDA_4']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 153, 7))
         df_txt['PRORATA']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 160, 7))
 
-        kolom_pkk = ['POKOK_SW', 'POKOK_1', 'POKOK_2', 'POKOK_3', 'POKOK_4', 'PRORATA']
-        kolom_dnd = ['DENDA_SW', 'DENDA_1', 'DENDA_2', 'DENDA_3', 'DENDA_4']
-        
-        for col in (kolom_pkk + kolom_dnd):
+        kolom_pokok_txt = ['POKOK_SW', 'POKOK_1', 'POKOK_2', 'POKOK_3', 'POKOK_4', 'PRORATA']
+        kolom_denda_txt = ['DENDA_SW', 'DENDA_1', 'DENDA_2', 'DENDA_3', 'DENDA_4']
+        semua_kolom_txt = kolom_pokok_txt + kolom_denda_txt
+
+        for col in semua_kolom_txt:
             df_txt[col] = pd.to_numeric(df_txt[col], errors='coerce').fillna(0)
         
-        df_txt['TOTAL_POKOK_TXT'] = df_txt[kolom_pkk].sum(axis=1)
-        df_txt['TOTAL_DENDA_TXT'] = df_txt[kolom_dnd].sum(axis=1)
+        df_txt['TOTAL_POKOK_TXT'] = df_txt[kolom_pokok_txt].sum(axis=1)
+        df_txt['TOTAL_DENDA_TXT'] = df_txt[kolom_denda_txt].sum(axis=1)
         df_txt['TOTAL_ALL_TXT'] = df_txt['TOTAL_POKOK_TXT'] + df_txt['TOTAL_DENDA_TXT']
 
-    # Logika Gabung
+    # 3. LOGIKA PERBANDINGAN
     if not df_excel.empty and not df_txt.empty:
         cocok = df_excel.merge(df_txt, on='NOPOL_NORMALIZED', how='inner').copy()
         hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])].copy()
@@ -114,8 +125,22 @@ with col1:
 with col2:
     txt_input = st.file_uploader("Upload TXT (Splitzing)", type=["txt"])
 
+# --- LOGIKA AUTO-RESET SAAT UPLOAD BARU ---
+if 'file_excel_name' not in st.session_state: st.session_state.file_excel_name = None
+if 'file_txt_name' not in st.session_state: st.session_state.file_txt_name = None
 if 'proses_selesai' not in st.session_state: st.session_state.proses_selesai = False
 
+# Cek apakah nama file yang diupload berbeda dengan yang ada di memori
+current_excel_name = excel_input.name if excel_input else None
+current_txt_name = txt_input.name if txt_input else None
+
+if current_excel_name != st.session_state.file_excel_name or current_txt_name != st.session_state.file_txt_name:
+    st.session_state.proses_selesai = False  # Reset tampilan ke awal
+    st.session_state.file_excel_name = current_excel_name
+    st.session_state.file_txt_name = current_txt_name
+    st.cache_data.clear() # Bersihkan cache agar data benar-benar baru
+
+# Tombol muncul jika minimal salah satu file diupload
 if excel_input or txt_input:
     if st.button("Cari Selisih", use_container_width=True):
         st.session_state.proses_selesai = True
@@ -124,58 +149,89 @@ if excel_input or txt_input:
         with st.spinner('Memproses data...'):
             cocok, hanya_excel, hanya_txt, df_txt, df_excel = proses_data_audit(excel_input, txt_input)
 
-        if not excel_input: st.warning("⚠️ Data CERI belum diunggah.")
-        if not txt_input: st.warning("⚠️ Data Splitzing belum diunggah.")
+        # Menampilkan peringatan jika salah satu file absen
+        if not excel_input: st.warning("⚠️ Data CERI (Excel) belum diunggah. Menampilkan data Splitzing saja.")
+        if not txt_input: st.warning("⚠️ Data Splitzing (TXT) belum diunggah. Menampilkan data CERI saja.")
 
-        # --- RINGKASAN ATAS DENGAN SELISIH (GAP) ---
+        # --- 4. TAMPILAN DASHBOARD ---
         st.subheader("📊 Ringkasan Perbandingan Data")
         
         sum_txt = df_txt['TOTAL_ALL_TXT'].sum() if not df_txt.empty else 0
         sum_excel = df_excel['Jumlah'].sum() if not df_excel.empty else 0
-        
-        # Perhitungan Gap tetap dilakukan meskipun satu file kosong
-        gap_nopol = len(df_txt) - len(df_excel)
         gap_total = sum_txt - sum_excel
 
         m0, m1, m2, m3 = st.columns(4)
-        m0.metric("Total Nopol (TXT)", f"{len(df_txt)} Unit", f"Gap: {gap_nopol}")
+        m0.metric("Total Nopol (TXT)", f"{len(df_txt)} Unit")
         m1.metric("Total Pokok (TXT)", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0")
         m2.metric("Total Denda (TXT)", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0")
         m3.metric("Grand Total (TXT)", f"Rp {sum_txt:,.0f}", f"Gap vs Excel: Rp {gap_total:,.0f}", delta_color="inverse")
         
         st.divider()
 
+        # --- 5. TAMPILAN TAB ---
         tab1, tab2, tab3 = st.tabs(["1. Ada di Keduanya", "2. Ada di CERI saja", "3. Ada di Splitzing saja"])
-        
+
         with tab1:
+            st.subheader("✅ Data ditemukan di CERI dan Splitzing")
             if not cocok.empty:
-                st.dataframe(cocok.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
+                list_selisih = cocok[cocok['SELISIH_CHECK'] != 0]
+                if not list_selisih.empty:
+                    st.error(f"🚨 **Ditemukan Perbedaan Nominal pada {len(list_selisih)} Nopol berikut:**")
+                    for _, row in list_selisih.iterrows():
+                        st.write(f"👉 **{row['No Polisi']}** - Selisih: Rp {row['SELISIH_CHECK']:,.0f}")
+                else:
+                    st.success("🎉 Tidak ada perbedaan nominal pada nopol yang cocok.")
+                
+                st.divider()
+                def highlight_diff(row):
+                    return ['background-color: #ffcccc' if row.SELISIH_CHECK != 0 else '' for _ in row]
+
+                df_display = cocok.drop(columns=['RAW_TEXT'], errors='ignore')
+                st.dataframe(df_display.style.apply(highlight_diff, axis=1), use_container_width=True)
                 st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
-            else: st.info("Unggah kedua file untuk melihat data yang cocok.")
+            else:
+                st.info("Unggah kedua file untuk melihat perbandingan data yang cocok.")
 
         with tab2:
+            st.subheader("⚠️ Ada di CERI (Excel) Tapi Tidak Ada di Splitzing")
             st.dataframe(hanya_excel, use_container_width=True)
             if not hanya_excel.empty:
                 st.divider()
-                st.subheader("💰 Rekapitulasi (Nominal Splitzing)")
+                st.subheader("💰 Rekapitulasi (Hanya di Excel)")
                 e1, e2, e3 = st.columns(3)
                 e1.metric("Pokok (KD+SW)", f"Rp {hanya_excel['POKOK_EXCEL'].sum():,.0f}")
                 e2.metric("Denda (DD)", f"Rp {hanya_excel['DD'].sum():,.0f}")
                 e3.metric("Total (Jumlah)", f"Rp {hanya_excel['Jumlah'].sum():,.0f}")
 
         with tab3:
+            st.subheader("⚠️ Ada di Splitzing (Txt) Tapi Tidak Ada di CERI (Excel)")
             if not hanya_txt.empty:
                 txt_output = "\n".join(hanya_txt['RAW_TEXT'].tolist())
-                st.download_button(label="Download File Splitzing", data=txt_output, file_name="selisih.txt")
+                st.download_button(
+                    label="Download File Splitzing (Khusus Nopol Selisih)",
+                    data=txt_output,
+                    file_name="selisih_splitzing_only.txt",
+                    mime="text/plain"
+                )
+            
+            st.divider()
+            st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
+            if not hanya_txt.empty:
                 st.divider()
-                st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
-                st.subheader("💰 Rekapitulasi (Hanya di TXT)")
+                st.subheader("💰 Rekapitulasi (Nominal Splitzing Saja)")
                 t1, t2, t3 = st.columns(3)
                 t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
                 t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
                 t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
 
-# --- FOOTER STATIS ---
+# --- FOOTER STATIS (SELALU MUNCUL DI AKHIR HALAMAN) ---
 st.write("") 
 st.divider() 
-st.markdown('<div style="text-align: center; color: #999; font-size: 12px; padding-bottom: 20px;">Project 2026 oleh Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol</div>', unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style="text-align: center; color: #999; font-size: 12px; padding-bottom: 20px;">
+        Project 2026 oleh Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
