@@ -132,15 +132,13 @@ if excel_file and txt_file:
         st.dataframe(hanya_excel)
 
     with tab3:
-    st.subheader("⚠️ Data hanya ada di TXT (Selisih)")
-
-    st.dataframe(hanya_txt)
-
-    st.subheader("💰 Rekap Tarif (Hanya Selisih)")
-
-    st.write("**Total per Kolom:**")
-    st.dataframe(total_per_kolom.to_frame(name='TOTAL'))
-
-    st.metric("Grand Total Selisih", f"{grand_total:,.0f}")
-
-
+        st.subheader("⚠️ Data hanya ada di TXT (Selisih)")
+    
+        st.dataframe(hanya_txt)
+    
+        st.subheader("💰 Rekap Tarif (Hanya Selisih)")
+    
+        st.write("**Total per Kolom:**")
+        st.dataframe(total_per_kolom.to_frame(name='TOTAL'))
+    
+        st.metric("Grand Total Selisih", f"{grand_total:,.0f}")
