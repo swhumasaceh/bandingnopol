@@ -83,6 +83,67 @@ if excel_file and txt_file:
     hanya_txt = df_txt[~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])].copy()
 
     # ===============================
+    # 1. PERHITUNGAN TOTAL RINGKASAN
+    # ===============================
+    
+    # Total dari Excel (CERI)
+    total_data_ex = len(df_excel)
+    total_pokok_ex = df_excel['POKOK_EXCEL'].sum()
+    total_denda_ex = df_excel['DD'].sum()
+    total_jumlah_ex = df_excel['Jumlah'].sum()
+
+    # Total dari TXT (Splitzing)
+    total_data_txt = len(df_txt)
+    total_pokok_txt = df_txt[kolom_pokok_txt].sum().sum()
+    total_denda_txt = df_txt[kolom_denda_txt].sum().sum()
+    total_jumlah_txt = total_pokok_txt + total_denda_txt
+
+    # 2. HITUNG SELISIH (GAP) - (TXT dikurangi Excel)
+    gap_data = total_data_txt - total_data_ex
+    gap_pokok = total_pokok_txt - total_pokok_ex
+    gap_denda = total_denda_txt - total_denda_ex
+    gap_jumlah = total_jumlah_txt - total_jumlah_ex
+
+    # ===============================
+    # 2. TAMPILAN DASHBOARD METRIC
+    # ===============================
+    st.subheader("📊 Ringkasan Perbandingan Data")
+    
+    # Baris Pertama: Jumlah Data
+    st.metric(
+        label="Total Data (Nopol)", 
+        value=f"{total_data_txt} Kendaraan", 
+        delta=f"Selisih: {gap_data} Nopol vs Excel",
+        delta_color="normal"
+    )
+
+    # Baris Kedua: Nominal Rupiah
+    col1, col2, col3 = st.columns(3)
+    
+    col1.metric(
+        label="Total Pokok (TXT)", 
+        value=f"Rp {total_pokok_txt:,.0f}", 
+        delta=f"Gap: Rp {gap_pokok:,.0f}",
+        delta_color="inverse"
+    )
+    
+    col2.metric(
+        label="Total Denda (TXT)", 
+        value=f"Rp {total_denda_txt:,.0f}", 
+        delta=f"Gap: Rp {gap_denda:,.0f}",
+        delta_color="inverse"
+    )
+    
+    col3.metric(
+        label="Grand Total (TXT)", 
+        value=f"Rp {total_jumlah_txt:,.0f}", 
+        delta=f"Gap: Rp {gap_jumlah:,.0f}",
+        delta_color="inverse"
+    )
+    
+    st.divider()
+    
+    # ===============================
     # LOGIKA PERHITUNGAN TARIF
     # ===============================
     
@@ -207,5 +268,6 @@ if excel_file and txt_file:
         
         st.write("**Detail Akumulasi per Kolom (Cocok):**")
         st.table(cocok[semua_kolom].sum().to_frame(name='Total (Rp)'))
+
 
 
