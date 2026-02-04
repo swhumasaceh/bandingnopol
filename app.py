@@ -102,7 +102,7 @@ if current_excel_name != st.session_state.file_excel_name or current_txt_name !=
 
 if excel_input and txt_input:
     # Tombol akan muncul kembali jika file diubah
-    if st.button("Proses Data", use_container_width=True):
+    if st.button("Cari Selisih", use_container_width=True):
         st.session_state.proses_selesai = True
     
     if st.session_state.proses_selesai:
@@ -126,7 +126,7 @@ if excel_input and txt_input:
         st.divider()
 
         # --- 5. TAMPILAN TAB ---
-        tab1, tab2, tab3 = st.tabs(["✅ Ada di Keduanya", "⚠️ Ada di CERI saja", "⚠️ Ada di Splitzing saja"])
+        tab1, tab2, tab3 = st.tabs(["1. Ada di Keduanya", "2. Ada di CERI saja", "3. Ada di Splitzing saja"])
 
         with tab1:
             st.subheader("✅ Data ditemukan di CERI dan Splitzing")
@@ -182,8 +182,9 @@ if excel_input and txt_input:
     st.markdown(
         """
         <div style="text-align: center; color: #999; font-size: 12px; padding-bottom: 20px;">
-            © 2026 Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol
+            © 2026 Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol JR Aceh
         </div>
         """, 
         unsafe_allow_html=True
     )
+
