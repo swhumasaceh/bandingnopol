@@ -35,8 +35,8 @@ st.set_page_config(page_title="Bandingkan Nopol Selisih JR Aceh", layout="wide")
 st.title("Aplikasi Perbandingan Nopol Selisih JR Aceh")
 
 # --- CAPTION ---
-[cite_start]st.caption("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing, pastikan seluruh data yang diupload sudah rapi, khususnya file txt splitzing ya! [cite: 5]")
-[cite_start]st.caption("Untuk file Excel CERI, masuk ke Monitoring > TIK > Penerimaan Per Nopol > Pilih Samsat dan Tanggal > Show ALL entries > Export [cite: 5]")
+st.caption("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing, pastikan seluruh data yang diupload sudah rapi, khususnya file txt splitzing ya!")
+st.caption("Untuk file Excel CERI, masuk ke Monitoring > TIK > Penerimaan Per Nopol > Pilih Samsat dan Tanggal > Show ALL entries > Export")
 
 st.divider()
 
@@ -229,3 +229,4 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
+
