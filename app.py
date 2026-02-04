@@ -68,49 +68,44 @@ if excel_file and txt_file:
     df_txt = df_txt.drop(columns=['RAW_TEXT'])
     
     # ===============================
-    # PERBANDINGAN + GABUNG DATA TXT
+    # PERBANDINGAN DATA
     # ===============================
     
     # Cocok: Excel + detail TXT
-    cocok = df_excel.merge(
-    df_txt,
-    on='NOPOL_NORMALIZED',
-    how='inner'
-    )
+    cocok = df_excel.merge(df_txt, on='NOPOL_NORMALIZED', how='inner')
     
     # Hanya di Excel
-    hanya_excel = df_excel[
-    ~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])
-    ]
+    hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])]
     
-    # Hanya di TXT (lengkap dengan kolom keuangan)
-    hanya_txt = df_txt[
-    ~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])
-    ].copy()
+    # Hanya di TXT (Gunakan .copy() agar tidak error saat hitung tarif)
+    hanya_txt = df_txt[~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])].copy()
 
     # ===============================
-    # LOGIKA PERHITUNGAN TERPISAH
+    # LOGIKA PERHITUNGAN TARIF
     # ===============================
     
-    # Kelompokkan kolom agar bisa dijumlahkan terpisah
     kolom_pokok = ['POKOK_SW', 'POKOK_1', 'POKOK_2', 'POKOK_3', 'POKOK_4', 'PRORATA']
     kolom_denda = ['DENDA_SW', 'DENDA_1', 'DENDA_2', 'DENDA_3', 'DENDA_4']
     semua_kolom = kolom_pokok + kolom_denda
     
-    # Konversi string ke angka (ribuan)
+    # Konversi ke numerik
     for col in semua_kolom:
         if col in hanya_txt.columns:
             hanya_txt[col] = pd.to_numeric(hanya_txt[col], errors='coerce').fillna(0)
     
-    # Hitung total per baris (untuk tampil di tabel)
+    # Hitung total per baris
     hanya_txt['TOTAL_POKOK'] = hanya_txt[kolom_pokok].sum(axis=1)
     hanya_txt['TOTAL_DENDA'] = hanya_txt[kolom_denda].sum(axis=1)
-    hanya_txt['GRAND_TOTAL_NOPOL'] = hanya_txt['TOTAL_POKOK'] + hanya_txt['TOTAL_DENDA']
+    hanya_txt['GRAND_TOTAL'] = hanya_txt['TOTAL_POKOK'] + hanya_txt['TOTAL_DENDA']
     
-    # Hitung total akhir untuk ringkasan (Summary)
+    # Hitung total akhir
     total_pokok_akhir = hanya_txt['TOTAL_POKOK'].sum()
     total_denda_akhir = hanya_txt['TOTAL_DENDA'].sum()
-    grand_total_semua = hanya_txt['GRAND_TOTAL_NOPOL'].sum()
+    grand_total_semua = hanya_txt['GRAND_TOTAL'].sum()
+
+    # ===============================
+    # TAMPILAN DASHBOARD
+    # ===============================
 
     st.subheader("📊 Ringkasan")
     c1, c2, c3 = st.columns(3)
@@ -130,21 +125,18 @@ if excel_file and txt_file:
     with tab2:
         st.dataframe(hanya_excel)
 
-   with tab3:
+    with tab3:
         st.subheader("⚠️ Data hanya ada di Splitzing")
         st.dataframe(hanya_txt)
     
         st.divider()
         st.subheader("💰 Rekapitulasi Tarif Selisih")
-        
-        # Tampilan angka besar (Metric)
+    
+        # Tampilan angka besar
         m1, m2, m3 = st.columns(3)
-        m1.metric("Total Pokok Selisih", f"Rp {total_pokok_akhir:,.0f}")
-        m2.metric("Total Denda Selisih", f"Rp {total_denda_akhir:,.0f}")
-        m3.metric("Grand Total Keseluruhan", f"Rp {grand_total_semua:,.0f}")
-
-        # Tabel rincian jika ingin melihat per kolom item
-        st.write("**Detail Akumulasi per Item:**")
-        rekap_per_item = hanya_txt[semua_kolom].sum().to_frame(name='Total (Rp)')
-        st.dataframe(rekap_per_item)
-
+        m1.metric("Total Pokok", f"Rp {total_pokok_akhir:,.0f}")
+        m2.metric("Total Denda", f"Rp {total_denda_akhir:,.0f}")
+        m3.metric("Grand Total", f"Rp {grand_total_semua:,.0f}")
+    
+        st.write("**Detail Akumulasi per Kolom:**")
+        st.table(hanya_txt[semua_kolom].sum().to_frame(name='Total (Rp)'))
