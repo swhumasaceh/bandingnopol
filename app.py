@@ -75,21 +75,6 @@ if excel_file and txt_file:
     # --- Perhitungan untuk tab 'Ada di Keduanya' ---
     # Gunakan .copy() agar aman saat memanipulasi kolom
     cocok = df_excel.merge(df_txt, on='NOPOL_NORMALIZED', how='inner').copy()
-
-    # Konversi kolom keuangan di dataframe 'cocok'
-    for col in semua_kolom:
-        if col in cocok.columns:
-            cocok[col] = pd.to_numeric(cocok[col], errors='coerce').fillna(0)
-
-    # Hitung total per baris untuk data yang cocok
-    cocok['TOTAL_POKOK'] = cocok[kolom_pokok].sum(axis=1)
-    cocok['TOTAL_DENDA'] = cocok[kolom_denda].sum(axis=1)
-    cocok['GRAND_TOTAL'] = cocok['TOTAL_POKOK'] + cocok['TOTAL_DENDA']
-
-    # Hitung total akhir untuk ringkasan tab cocok
-    total_pokok_cocok = cocok['TOTAL_POKOK'].sum()
-    total_denda_cocok = cocok['TOTAL_DENDA'].sum()
-    grand_total_cocok = cocok['GRAND_TOTAL'].sum()
     
     # Hanya di Excel
     hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])]
@@ -119,6 +104,21 @@ if excel_file and txt_file:
     total_pokok_akhir = hanya_txt['TOTAL_POKOK'].sum()
     total_denda_akhir = hanya_txt['TOTAL_DENDA'].sum()
     grand_total_semua = hanya_txt['GRAND_TOTAL'].sum()
+
+    # Konversi kolom keuangan di dataframe 'cocok'
+    for col in semua_kolom:
+        if col in cocok.columns:
+            cocok[col] = pd.to_numeric(cocok[col], errors='coerce').fillna(0)
+
+    # Hitung total per baris untuk data yang cocok
+    cocok['TOTAL_POKOK'] = cocok[kolom_pokok].sum(axis=1)
+    cocok['TOTAL_DENDA'] = cocok[kolom_denda].sum(axis=1)
+    cocok['GRAND_TOTAL'] = cocok['TOTAL_POKOK'] + cocok['TOTAL_DENDA']
+
+    # Hitung total akhir untuk ringkasan tab cocok
+    total_pokok_cocok = cocok['TOTAL_POKOK'].sum()
+    total_denda_cocok = cocok['TOTAL_DENDA'].sum()
+    grand_total_cocok = cocok['GRAND_TOTAL'].sum()
 
     # ===============================
     # TAMPILAN DASHBOARD
@@ -170,3 +170,4 @@ if excel_file and txt_file:
         
         st.write("**Detail Akumulasi per Kolom (Cocok):**")
         st.table(cocok[semua_kolom].sum().to_frame(name='Total (Rp)'))
+
