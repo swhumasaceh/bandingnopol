@@ -18,13 +18,13 @@ def normalize_nopol(text):
 col1, col2 = st.columns(2)
 
 with col1:
-    excel_file = st.file_uploader("Upload Excel (Penerimaan)", type=["xlsx"])
+    excel_file = st.file_uploader("Upload Excel (CERI)", type=["xlsx"])
 
 with col2:
-    txt_file = st.file_uploader("Upload TXT (Samkel)", type=["txt"])
+    txt_file = st.file_uploader("Upload TXT (Splitzing)", type=["txt"])
 
 if excel_file and txt_file:
-    df_excel = pd.read_excel(excel_file)
+    df_excel = pd.read_excel(excel_file, header=1)
     df_excel['NOPOL_NORMALIZED'] = df_excel['No Polisi'].apply(normalize_nopol)
 
     lines = txt_file.read().decode("utf-8", errors="ignore").splitlines()
@@ -55,4 +55,5 @@ if excel_file and txt_file:
         st.dataframe(hanya_excel)
 
     with tab3:
+
         st.dataframe(hanya_txt)
