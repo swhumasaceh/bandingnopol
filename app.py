@@ -30,62 +30,73 @@ with col2:
     txt_file = st.file_uploader("Upload TXT (Splitzing)", type=["txt"])
 
 if excel_file and txt_file:
-    # 1. BACA DATA (KODE LAMA KAMU)
+    # --- 1. PEMBACAAN DATA ---
     df_excel = pd.read_excel(excel_file, header=1)
     df_excel['NOPOL_NORMALIZED'] = df_excel['No Polisi'].apply(normalize_nopol)
 
-    lines = txt_file.read().decode("utf-8", errors="ignore").splitlines()
-    # ... (proses extract_fixed kamu) ...
+    # Membaca TXT
+    content = txt_file.read().decode("utf-8", errors="ignore")
+    lines = content.splitlines()
+    
+    # Filter hanya baris yang mengandung data (misal ada 'BL')
+    data_lines = [l for l in lines if "BL" in l]
+    df_txt = pd.DataFrame(data_lines, columns=['RAW_TEXT'])
+    df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
 
-    # 2. DEFINISIKAN LIST KOLOM TARIF TXT
+    # --- 2. DEFINISI KOLOM (WAJIB SEBELUM PERHITUNGAN) ---
     kolom_pokok_txt = ['POKOK_SW', 'POKOK_1', 'POKOK_2', 'POKOK_3', 'POKOK_4', 'PRORATA']
     kolom_denda_txt = ['DENDA_SW', 'DENDA_1', 'DENDA_2', 'DENDA_3', 'DENDA_4']
     semua_kolom_txt = kolom_pokok_txt + kolom_denda_txt
 
-    # 3. KONVERSI & BUAT KOLOM POKOK EXCEL (WAJIB DI SINI)
+    # --- 3. EKSTRAKSI FIXED WIDTH TXT ---
+    df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
+    df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
+    df_txt['POKOK_1'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 104, 7))
+    df_txt['DENDA_1'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 111, 7))
+    # ... (lanjutkan ekstraksi kolom lainnya di sini) ...
+
+    # --- 4. PENYIAPAN KOLOM EXCEL (KD, SW, DD, Jumlah) ---
     for col in ['KD', 'SW', 'DD', 'Jumlah']:
         if col in df_excel.columns:
             df_excel[col] = pd.to_numeric(df_excel[col], errors='coerce').fillna(0)
     
-    # Membuat kolom POKOK_EXCEL sebelum di-sum (untuk menghindari KeyError)
+    # Buat kolom POKOK_EXCEL (KD + SW)
     df_excel['POKOK_EXCEL'] = df_excel['KD'] + df_excel['SW']
 
-    # 4. KONVERSI TARIF TXT KE ANGKA
+    # --- 5. KONVERSI TXT KE NUMERIK ---
     for col in semua_kolom_txt:
         if col in df_txt.columns:
             df_txt[col] = pd.to_numeric(df_txt[col], errors='coerce').fillna(0)
 
-    # 5. PROSES PERBANDINGAN (MERGE & FILTER)
+    # --- 6. PROSES PERBANDINGAN ---
     cocok = df_excel.merge(df_txt, on='NOPOL_NORMALIZED', how='inner').copy()
     hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])].copy()
     hanya_txt = df_txt[~df_txt['NOPOL_NORMALIZED'].isin(df_excel['NOPOL_NORMALIZED'])].copy()
 
-    # 6. HITUNG TOTAL UNTUK RINGKASAN (METRIC)
-    # Excel totals
+    # --- 7. HITUNG TOTAL & SELISIH UNTUK RINGKASAN ---
     total_data_ex = len(df_excel)
     total_pokok_ex = df_excel['POKOK_EXCEL'].sum()
     total_denda_ex = df_excel['DD'].sum()
     total_jumlah_ex = df_excel['Jumlah'].sum()
 
-    # TXT totals
     total_data_txt = len(df_txt)
     total_pokok_txt = df_txt[kolom_pokok_txt].sum().sum()
     total_denda_txt = df_txt[kolom_denda_txt].sum().sum()
     total_jumlah_txt = total_pokok_txt + total_denda_txt
 
-    # Gap (TXT - Excel)
+    # Hitung Selisih (Gap)
     gap_data = total_data_txt - total_data_ex
     gap_pokok = total_pokok_txt - total_pokok_ex
     gap_denda = total_denda_txt - total_denda_ex
     gap_jumlah = total_jumlah_txt - total_jumlah_ex
 
-    # 7. TAMPILKAN RINGKASAN DI BAGIAN ATAS
+    # --- 8. TAMPILAN RINGKASAN ---
     st.subheader("📊 Ringkasan Perbandingan Data")
     
     st.metric(
         label="Total Data (Nopol)", 
         value=f"{total_data_txt} Unit", 
-        delta=f"Selisih: {gap_data} Unit vs Excel"
+        delta=f"{gap_data} Unit vs Excel"
     )
 
     c1, c2, c3 = st.columns(3)
@@ -118,44 +129,14 @@ if excel_file and txt_file:
         st.table(hanya_txt[semua_kolom].sum().to_frame(name='Total (Rp)'))
 
     with tab2:
-        st.subheader("⚠️ Data hanya ada di CERI (Excel)")
-        
-        # --- LOGIKA PERHITUNGAN KHUSUS EXCEL ---
-        # 1. Pastikan kolom Excel dikonversi ke numerik agar bisa dijumlahkan
-        kolom_hitung_excel = ['KD', 'SW', 'DD', 'Jumlah']
-        for col in kolom_hitung_excel:
-            if col in hanya_excel.columns:
-                hanya_excel[col] = pd.to_numeric(hanya_excel[col], errors='coerce').fillna(0)
-        
-        # 2. Hitung Pokok (KD + SW) per baris
-        if 'KD' in hanya_excel.columns and 'SW' in hanya_excel.columns:
-            hanya_excel['TOTAL_POKOK_EX'] = hanya_excel['KD'] + hanya_excel['SW']
-        else:
-            hanya_excel['TOTAL_POKOK_EX'] = 0
-
-        # 3. Hitung Grand Total untuk metrik dashboard
-        total_pokok_ex = hanya_excel['TOTAL_POKOK_EX'].sum()
-        total_denda_ex = hanya_excel['DD'].sum() if 'DD' in hanya_excel.columns else 0
-        total_jumlah_ex = hanya_excel['Jumlah'].sum() if 'Jumlah' in hanya_excel.columns else 0
-        
-        # --- TAMPILAN ---
+        st.subheader("⚠️ Data hanya ada di CERI")
         st.dataframe(hanya_excel)
-        
         st.divider()
-        st.subheader("💰 Rekapitulasi Tarif (Hanya di Excel)")
-        
-        # Tampilan metrik angka besar
+        st.subheader("💰 Rekapitulasi (Hanya di Excel)")
         m_ex1, m_ex2, m_ex3 = st.columns(3)
-        m_ex1.metric("Total Pokok (KD+SW)", f"Rp {total_pokok_ex:,.0f}")
-        m_ex2.metric("Total Denda (DD)", f"Rp {total_denda_ex:,.0f}")
-        m_ex3.metric("Grand Total (Jumlah)", f"Rp {total_jumlah_ex:,.0f}")
-
-        # Tabel rincian akumulasi
-        rekap_ex = pd.DataFrame({
-            "Kategori": ["Pokok (KD+SW)", "Denda (DD)", "Total Keseluruhan"],
-            "Nilai": [total_pokok_ex, total_denda_ex, total_jumlah_ex]
-        })
-        st.table(rekap_ex.set_index("Kategori"))
+        m_ex1.metric("Pokok (KD+SW)", f"Rp {hanya_excel['POKOK_EXCEL'].sum():,.0f}")
+        m_ex2.metric("Denda (DD)", f"Rp {hanya_excel['DD'].sum():,.0f}")
+        m_ex3.metric("Total", f"Rp {hanya_excel['Jumlah'].sum():,.0f}")
 
     with tab3:
         st.subheader("✅ Data ditemukan di CERI dan Splitzing")
@@ -172,6 +153,7 @@ if excel_file and txt_file:
         
         st.write("**Detail Akumulasi per Kolom (Cocok):**")
         st.table(cocok[semua_kolom].sum().to_frame(name='Total (Rp)'))
+
 
 
 
