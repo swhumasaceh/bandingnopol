@@ -181,7 +181,7 @@ if excel_input or txt_input:
             if not cocok.empty:
                 list_selisih = cocok[cocok['SELISIH_CHECK'] != 0]
                 if not list_selisih.empty:
-                    st.error(f"🚨 **Ditemukan Perbedaan Nominal pada {len(list_selisih)} Nopol berikut:**")]
+                    st.error(f"🚨 **Ditemukan Perbedaan Nominal pada {len(list_selisih)} Nopol berikut:**")
                     for _, row in list_selisih.iterrows():
                         st.write(f"👉 **{row['No Polisi']}** - Selisih: Rp {row['SELISIH_CHECK']:,.0f}")
                 else:
@@ -240,4 +240,5 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
