@@ -130,7 +130,7 @@ if 'file_excel_name' not in st.session_state: st.session_state.file_excel_name =
 if 'file_txt_name' not in st.session_state: st.session_state.file_txt_name = None
 if 'proses_selesai' not in st.session_state: st.session_state.proses_selesai = False
 
-# Cek apakah nama file yang diupload berbeda dengan yang ada di memori
+# [cite_start]Cek apakah nama file yang diupload berbeda dengan yang ada di memori [cite: 37]
 current_excel_name = excel_input.name if excel_input else None
 current_txt_name = txt_input.name if txt_input else None
 
@@ -145,12 +145,12 @@ if excel_input or txt_input:
     if st.button("Cari Selisih", use_container_width=True):
         st.session_state.proses_selesai = True
     
-    if st.session_state.proses_selesai:
+    [cite_start]if st.session_state.proses_selesai: [cite: 38]
         with st.spinner('Memproses data...'):
             cocok, hanya_excel, hanya_txt, df_txt, df_excel = proses_data_audit(excel_input, txt_input)
 
-        # Menampilkan peringatan jika salah satu file absen
-        if not excel_input: st.warning("⚠️ Data CERI (Excel) belum diunggah. Menampilkan data Splitzing saja.")
+        # [cite_start]Menampilkan peringatan jika salah satu file absen [cite: 39]
+        [cite_start]if not excel_input: st.warning("⚠️ Data CERI (Excel) belum diunggah. Menampilkan data Splitzing saja.") [cite: 39]
         if not txt_input: st.warning("⚠️ Data Splitzing (TXT) belum diunggah. Menampilkan data CERI saja.")
 
         # --- 4. TAMPILAN DASHBOARD ---
@@ -158,71 +158,76 @@ if excel_input or txt_input:
         
         sum_txt = df_txt['TOTAL_ALL_TXT'].sum() if not df_txt.empty else 0
         sum_excel = df_excel['Jumlah'].sum() if not df_excel.empty else 0
+        
+        # [cite_start]Hitung Gap/Selisih [cite: 40]
+        gap_nopol = len(df_txt) - len(df_excel)
+        gap_pokok = (df_txt['TOTAL_POKOK_TXT'].sum() if not df_txt.empty else 0) - (df_excel['POKOK_EXCEL'].sum() if not df_excel.empty else 0)
+        gap_denda = (df_txt['TOTAL_DENDA_TXT'].sum() if not df_txt.empty else 0) - (df_excel['DD'].sum() if not df_excel.empty else 0)
         gap_total = sum_txt - sum_excel
 
-        m0, m1, m2, m3 = st.columns(4)
-        m0.metric("Total Nopol (TXT)", f"{len(df_txt)} Unit")
-        m1.metric("Total Pokok (TXT)", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0")
-        m2.metric("Total Denda (TXT)", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0")
-        m3.metric("Grand Total (TXT)", f"Rp {sum_txt:,.0f}", f"Gap vs Excel: Rp {gap_total:,.0f}", delta_color="inverse")
+        [cite_start]m0, m1, m2, m3 = st.columns(4) [cite: 40]
+        [cite_start]m0.metric("Total Nopol (TXT)", f"{len(df_txt)} Unit", f"Gap: {gap_nopol}") [cite: 40]
+        [cite_start]m1.metric("Total Pokok (TXT)", f"Rp {df_txt['TOTAL_POKOK_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0", f"Gap: Rp {gap_pokok:,.0f}") [cite: 40]
+        [cite_start]m2.metric("Total Denda (TXT)", f"Rp {df_txt['TOTAL_DENDA_TXT'].sum():,.0f}" if not df_txt.empty else "Rp 0", f"Gap: Rp {gap_denda:,.0f}") [cite: 40]
+        [cite_start]m3.metric("Grand Total (TXT)", f"Rp {sum_txt:,.0f}", f"Gap vs Excel: Rp {gap_total:,.0f}", delta_color="inverse") [cite: 40]
         
         st.divider()
 
-        # --- 5. TAMPILAN TAB ---
-        tab1, tab2, tab3 = st.tabs(["1. Ada di Keduanya", "2. Ada di CERI saja", "3. Ada di Splitzing saja"])
+        # [cite_start]--- 5. TAMPILAN TAB --- [cite: 41]
+        [cite_start]tab1, tab2, tab3 = st.tabs(["1. Ada di Keduanya", "2. Ada di CERI saja", "3. Ada di Splitzing saja"]) [cite: 42]
 
         with tab1:
             st.subheader("✅ Data ditemukan di CERI dan Splitzing")
             if not cocok.empty:
                 list_selisih = cocok[cocok['SELISIH_CHECK'] != 0]
                 if not list_selisih.empty:
-                    st.error(f"🚨 **Ditemukan Perbedaan Nominal pada {len(list_selisih)} Nopol berikut:**")
+                    [cite_start]st.error(f"🚨 **Ditemukan Perbedaan Nominal pada {len(list_selisih)} Nopol berikut:**") [cite: 43]
                     for _, row in list_selisih.iterrows():
                         st.write(f"👉 **{row['No Polisi']}** - Selisih: Rp {row['SELISIH_CHECK']:,.0f}")
                 else:
-                    st.success("🎉 Tidak ada perbedaan nominal pada nopol yang cocok.")
+                    [cite_start]st.success("🎉 Tidak ada perbedaan nominal pada nopol yang cocok.") [cite: 44]
                 
                 st.divider()
                 def highlight_diff(row):
                     return ['background-color: #ffcccc' if row.SELISIH_CHECK != 0 else '' for _ in row]
 
-                df_display = cocok.drop(columns=['RAW_TEXT'], errors='ignore')
+                [cite_start]df_display = cocok.drop(columns=['RAW_TEXT'], errors='ignore') [cite: 45]
                 st.dataframe(df_display.style.apply(highlight_diff, axis=1), use_container_width=True)
                 st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
             else:
                 st.info("Unggah kedua file untuk melihat perbandingan data yang cocok.")
 
-        with tab2:
+        [cite_start]with tab2: [cite: 46]
             st.subheader("⚠️ Ada di CERI (Excel) Tapi Tidak Ada di Splitzing")
             st.dataframe(hanya_excel, use_container_width=True)
             if not hanya_excel.empty:
                 st.divider()
                 st.subheader("💰 Rekapitulasi (Hanya di Excel)")
-                e1, e2, e3 = st.columns(3)
+                [cite_start]e1, e2, e3 = st.columns(3) [cite: 47]
                 e1.metric("Pokok (KD+SW)", f"Rp {hanya_excel['POKOK_EXCEL'].sum():,.0f}")
                 e2.metric("Denda (DD)", f"Rp {hanya_excel['DD'].sum():,.0f}")
                 e3.metric("Total (Jumlah)", f"Rp {hanya_excel['Jumlah'].sum():,.0f}")
 
         with tab3:
             st.subheader("⚠️ Ada di Splitzing (Txt) Tapi Tidak Ada di CERI (Excel)")
-            if not hanya_txt.empty:
+            [cite_start]if not hanya_txt.empty: [cite: 48]
                 txt_output = "\n".join(hanya_txt['RAW_TEXT'].tolist())
                 st.download_button(
                     label="Download File Splitzing (Khusus Nopol Selisih)",
                     data=txt_output,
-                    file_name="selisih_splitzing_only.txt",
+                    [cite_start]file_name="selisih_splitzing_only.txt", [cite: 49]
                     mime="text/plain"
                 )
             
             st.divider()
             st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
             if not hanya_txt.empty:
-                st.divider()
+                [cite_start]st.divider() [cite: 50]
                 st.subheader("💰 Rekapitulasi (Nominal Splitzing Saja)")
                 t1, t2, t3 = st.columns(3)
                 t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
                 t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
-                t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}")
+                [cite_start]t3.metric("Grand Total", f"Rp {hanya_txt['TOTAL_ALL_TXT'].sum():,.0f}") [cite: 51]
 
 # --- FOOTER STATIS (SELALU MUNCUL DI AKHIR HALAMAN) ---
 st.write("") 
@@ -232,6 +237,6 @@ st.markdown(
     <div style="text-align: center; color: #999; font-size: 12px; padding-bottom: 20px;">
         Project 2026 oleh Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol
     </div>
-    """, 
+    [cite_start]""", [cite: 52]
     unsafe_allow_html=True
 )
