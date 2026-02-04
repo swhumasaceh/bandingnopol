@@ -3,30 +3,30 @@ import pandas as pd
 import re
 import time
 
-# --- CUSTOM CSS UNTUK TOMBOL DOWNLOAD HIJAU ---
+# --- CUSTOM CSS UNTUK TOMBOL HIJAU ---
 st.markdown("""
     <style>
-    /* Menargetkan tombol download (st.download_button) */
-    .stDownloadButton > button {
-        background-color: #28a745; /* Warna hijau */
-        color: white;
+    /* Menargetkan semua tombol (Proses Data & Download) */
+    .stButton > button, .stDownloadButton > button {
+        background-color: #28a745 !important; /* Warna hijau */
+        color: white !important;
         border: none;
         padding: 0.5rem 1rem;
         border-radius: 0.3rem;
         transition: 0.3s;
+        width: 100%; /* Agar tombol Proses Data tetap selebar kontainer */
     }
     
-    /* Efek saat kursor di atas tombol (hover) */
-    .stDownloadButton > button:hover {
-        background-color: #218838; /* Hijau lebih gelap saat di-hover */
-        color: white;
-        border: none;
+    /* Efek hover untuk semua tombol */
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        background-color: #218838 !important;
+        color: white !important;
     }
 
-    /* Memastikan teks tetap putih saat ditekan */
-    .stDownloadButton > button:active {
-        background-color: #1e7e34;
-        color: white;
+    /* Menghilangkan border merah/biru bawaan streamlit saat diklik */
+    .stButton > button:focus, .stDownloadButton > button:focus {
+        box-shadow: none !important;
+        color: white !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -216,5 +216,6 @@ st.markdown(
     """, 
     unsafe_allow_html=True
 )
+
 
 
