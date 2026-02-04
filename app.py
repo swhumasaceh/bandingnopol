@@ -72,7 +72,24 @@ if excel_file and txt_file:
     # ===============================
     
     # Cocok: Excel + detail TXT
-    cocok = df_excel.merge(df_txt, on='NOPOL_NORMALIZED', how='inner')
+    # --- Perhitungan untuk tab 'Ada di Keduanya' ---
+    # Gunakan .copy() agar aman saat memanipulasi kolom
+    cocok = df_excel.merge(df_txt, on='NOPOL_NORMALIZED', how='inner').copy()
+
+    # Konversi kolom keuangan di dataframe 'cocok'
+    for col in semua_kolom:
+        if col in cocok.columns:
+            cocok[col] = pd.to_numeric(cocok[col], errors='coerce').fillna(0)
+
+    # Hitung total per baris untuk data yang cocok
+    cocok['TOTAL_POKOK'] = cocok[kolom_pokok].sum(axis=1)
+    cocok['TOTAL_DENDA'] = cocok[kolom_denda].sum(axis=1)
+    cocok['GRAND_TOTAL'] = cocok['TOTAL_POKOK'] + cocok['TOTAL_DENDA']
+
+    # Hitung total akhir untuk ringkasan tab cocok
+    total_pokok_cocok = cocok['TOTAL_POKOK'].sum()
+    total_denda_cocok = cocok['TOTAL_DENDA'].sum()
+    grand_total_cocok = cocok['GRAND_TOTAL'].sum()
     
     # Hanya di Excel
     hanya_excel = df_excel[~df_excel['NOPOL_NORMALIZED'].isin(df_txt['NOPOL_NORMALIZED'])]
@@ -139,4 +156,17 @@ if excel_file and txt_file:
         st.dataframe(hanya_excel)
 
     with tab3:
-       st.dataframe(cocok)
+        st.subheader("✅ Data ditemukan di CERI dan Splitzing")
+        st.dataframe(cocok)
+        
+        st.divider()
+        st.subheader("💰 Rekapitulasi Tarif (Data Cocok)")
+        
+        # Tampilan angka besar untuk data yang cocok
+        mc1, mc2, mc3 = st.columns(3)
+        mc1.metric("Total Pokok Cocok", f"Rp {total_pokok_cocok:,.0f}")
+        mc2.metric("Total Denda Cocok", f"Rp {total_denda_cocok:,.0f}")
+        mc3.metric("Grand Total Cocok", f"Rp {grand_total_cocok:,.0f}")
+        
+        st.write("**Detail Akumulasi per Kolom (Cocok):**")
+        st.table(cocok[semua_kolom].sum().to_frame(name='Total (Rp)'))
