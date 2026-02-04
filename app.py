@@ -107,25 +107,19 @@ if excel_file and txt_file:
     # TAMPILAN DASHBOARD
     # ===============================
 
-    st.subheader("📊 Ringkasan")
+    st.subheader("📊 Ringkasan Perbandingan Data")
     c1, c2, c3 = st.columns(3)
     c1.metric("Total Excel", len(df_excel))
     c2.metric("Total TXT", len(df_txt))
     c3.metric("Cocok", len(cocok))
 
     tab1, tab2, tab3 = st.tabs([
-        "✅ Ada di Keduanya",
+        "⚠️ Ada di Splitzing saja",
         "⚠️ Ada di CERI saja",
-        "⚠️ Ada di Splitzing saja"
+        "✅ Ada di Keduanya"
     ])
 
     with tab1:
-        st.dataframe(cocok)
-
-    with tab2:
-        st.dataframe(hanya_excel)
-
-    with tab3:
         st.subheader("⚠️ Data hanya ada di Splitzing")
         st.dataframe(hanya_txt)
     
@@ -140,3 +134,9 @@ if excel_file and txt_file:
     
         st.write("**Detail Akumulasi per Kolom:**")
         st.table(hanya_txt[semua_kolom].sum().to_frame(name='Total (Rp)'))
+
+    with tab2:
+        st.dataframe(hanya_excel)
+
+    with tab3:
+       st.dataframe(cocok)
