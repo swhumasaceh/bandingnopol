@@ -176,10 +176,10 @@ if excel_input or txt_input:
         st.divider()
 
         # [cite_start]--- 5. TAMPILAN TAB --- [cite: 41]
-        tab1, tab2, tab3 = st.tabs(["1. Ada di Keduanya", "2. Ada di CERI saja", "3. Ada di Splitzing saja"])
+        tab1, tab2, tab3 = st.tabs(["Ada di Keduanya", "Perlu Dihapus", "Perlu Dipush"])
 
         with tab1:
-            st.subheader("✅ Data ditemukan di CERI dan Splitzing")
+            st.subheader("Berikut Data yang ditemukan di CERI dan Splitzing")
             if not cocok.empty:
                 list_selisih = cocok[cocok['SELISIH_CHECK'] != 0]
                 if not list_selisih.empty:
@@ -187,7 +187,7 @@ if excel_input or txt_input:
                     for _, row in list_selisih.iterrows():
                         st.write(f"👉 **{row['No Polisi']}** - Selisih: Rp {row['SELISIH_CHECK']:,.0f}")
                 else:
-                    st.success("🎉 Tidak ada perbedaan nominal pada nopol yang cocok.")
+                    st.success("Tidak ada perbedaan nominal pada nopol ini (tidak ada yang perlu update data)")
                 
                 st.divider()
                 def highlight_diff(row):
@@ -195,12 +195,12 @@ if excel_input or txt_input:
 
                 df_display = cocok.drop(columns=['RAW_TEXT'], errors='ignore')
                 st.dataframe(df_display.style.apply(highlight_diff, axis=1), use_container_width=True)
-                st.metric("Total Nominal Cocok (TXT)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
+                st.metric("Total Nominal Cocok (splitzing)", f"Rp {cocok['TOTAL_ALL_TXT'].sum():,.0f}")
             else:
                 st.info("Unggah kedua file untuk melihat perbandingan data yang cocok.")
 
         with tab2:
-            st.subheader("⚠️ Ada di CERI (Excel) Tapi Tidak Ada di Splitzing")
+            st.subheader("⚠️ Ada di CERI (Excel) Tapi Tidak Ada di Splitzing / Data perlu dihapus")
             st.dataframe(hanya_excel, use_container_width=True)
             if not hanya_excel.empty:
                 st.divider()
@@ -211,11 +211,11 @@ if excel_input or txt_input:
                 e3.metric("Total (Jumlah)", f"Rp {hanya_excel['Jumlah'].sum():,.0f}")
 
         with tab3:
-            st.subheader("⚠️ Ada di Splitzing (Txt) Tapi Tidak Ada di CERI (Excel)")
+            st.subheader("⚠️ Ada di Splitzing (Txt) Tapi Tidak Ada di CERI (Excel) / Data perlu dipush")
             if not hanya_txt.empty:
                 txt_output = "\n".join(hanya_txt['RAW_TEXT'].tolist())
                 st.download_button(
-                    label="Download File Splitzing (Khusus Nopol Selisih)",
+                    label="Download File Splitzing (Nopol Selisih Saja)",
                     data=txt_output,
                     file_name="selisih_splitzing_only.txt",
                     mime="text/plain"
@@ -225,7 +225,7 @@ if excel_input or txt_input:
             st.dataframe(hanya_txt.drop(columns=['RAW_TEXT'], errors='ignore'), use_container_width=True)
             if not hanya_txt.empty:
                 st.divider()
-                st.subheader("💰 Rekapitulasi (Nominal Splitzing Saja)")
+                st.subheader("💰 Rekapitulasi (Nominal Selisih Saja berdasarkan Splitzing)")
                 t1, t2, t3 = st.columns(3)
                 t1.metric("Total Pokok", f"Rp {hanya_txt['TOTAL_POKOK_TXT'].sum():,.0f}")
                 t2.metric("Total Denda", f"Rp {hanya_txt['TOTAL_DENDA_TXT'].sum():,.0f}")
@@ -242,6 +242,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
