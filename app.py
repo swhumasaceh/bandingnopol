@@ -212,7 +212,7 @@ if excel_input or txt_input:
 
         with tab3:
             st.subheader("⚠️ Ada di Splitzing (Txt) Tapi Tidak Ada di CERI (Excel) / Data perlu dipush")
-            st.caption("Setelah download file splitzing di bawah ini, mohon dapat diupload pada [Drive ini](https://drive.google.com/drive/folders/1jb8aJkv73abKVgRFo4EROmTB2uoHqu53?usp=drive_link).")
+            st.caption("Setelah download file splitzing di bawah ini, mohon dapat diupload pada [Drive ini](https://drive.google.com/drive/folders/1jb8aJkv73abKVgRFo4EROmTB2uoHqu53?usp=drive_link). Jangan lupa ubah nama filenya menjadi Nama Samsat dan Tanggalnya.")
             if not hanya_txt.empty:
                 txt_output = "\n".join(hanya_txt['RAW_TEXT'].tolist())
                 st.download_button(
@@ -243,6 +243,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
