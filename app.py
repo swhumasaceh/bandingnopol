@@ -32,11 +32,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.set_page_config(page_title="Bandingkan Nopol Selisih JR Aceh", layout="wide")
-st.title("Aplikasi Perbandingan Nopol Selisih JR Aceh")
+st.title("Aplikasi Perbandingan Nopol Selisih Samsat - JR Aceh")
 
 # --- CAPTION ---
-st.caption("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing, pastikan seluruh data yang diupload sudah rapi, khususnya file txt splitzing ya!")
-st.caption("Untuk file Excel CERI, masuk ke Monitoring > TIK > Penerimaan Per Nopol > Pilih Samsat dan Tanggal > Show ALL entries > Export")
+st.caption("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing. Panduan lengkap bisa dilihat [DISINI](https://drive.google.com/drive/folders/1SvolTT-7_WGORXME0pzZTiiUWBGmMXTJ?usp=drive_link)")
+st.caption("Pastikan seluruh data yang diupload sudah rapi, khususnya file txt splitzing yang didownload dari Aplikasi Samsat!")
+st.caption("Untuk file Excel CERI, masuk ke Monitoring > TIK > [Penerimaan Per Nopol](https://ceri.jasaraharja.co.id/monitoring/sw_penerimaan_per_nopol) > Pilih Samsat dan Tanggal > Show ALL entries > Export")
 
 st.divider()
 
@@ -236,11 +237,12 @@ st.divider()
 st.markdown(
     """
     <div style="text-align: center; color: #999; font-size: 12px; padding-bottom: 20px;">
-        Project 2026 oleh Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol
+        2026 Muhammad Hafiz R - Aplikasi Monitoring Selisih Nopol
     </div>
     """,
     unsafe_allow_html=True
 )
+
 
 
 
