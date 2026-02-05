@@ -35,7 +35,7 @@ st.set_page_config(page_title="Bandingkan Nopol Selisih JR Aceh", layout="wide")
 st.title("Aplikasi Perbandingan Nopol Selisih Samsat - JR Aceh")
 
 # --- CAPTION ---
-st.caption("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing. Panduan lengkap bisa dilihat [DISINI](https://drive.google.com/drive/folders/1SvolTT-7_WGORXME0pzZTiiUWBGmMXTJ?usp=drive_link)")
+st.caption("Pengecekan Selisih Nominal antara Data CERI dan Data Splitzing. Panduan lengkap bisa dilihat [DISINI](https://drive.google.com/drive/folders/1SvolTT-7_WGORXME0pzZTiiUWBGmMXTJ?usp=drive_link).")
 st.caption("Pastikan seluruh data yang diupload sudah rapi, khususnya file txt splitzing yang didownload dari Aplikasi Samsat!")
 st.caption("Untuk file Excel CERI, masuk ke Monitoring > TIK > [Penerimaan Per Nopol](https://ceri.jasaraharja.co.id/monitoring/sw_penerimaan_per_nopol) > Pilih Samsat dan Tanggal > Show ALL entries > Export")
 
@@ -242,6 +242,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
