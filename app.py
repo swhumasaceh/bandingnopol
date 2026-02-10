@@ -3,6 +3,34 @@ import pandas as pd
 import re
 import time
 
+# Load kode samsat
+@st.cache_data
+def load_samsat_ref():
+    try:
+        df = pd.read_csv("samsat_ref.csv", names=['NamaSamsat', 'KodeExcel'], dtype=str)
+        return df
+    except:
+        return pd.DataFrame(columns=['NamaSamsat', 'KodeExcel'])
+
+df_ref_samsat = load_samsat_ref()
+
+def extract_header_info(first_line, df_ref):
+    try:
+        # Tanggal 1-8: DDMMYYYY
+        tgl_raw = first_line[0:8]
+        tgl_formatted = f"{tgl_raw[:2]}-{tgl_raw[2:4]}-{tgl_raw[4:]}"
+        
+        # Kode Samsat 9-14: 6 digit
+        kode_splitzing = first_line[8:14]
+        
+        # Cari nama samsat (6 kode splitzing dan 7 kode excel dicocokkan)
+        match = df_ref[df_ref['KodeExcel'].str.contains(kode_splitzing, na=False)]
+        nama_samsat = match.iloc[0]['NamaSamsat'] if not match.empty else "Samsat Tidak Dikenali"
+        
+        return tgl_formatted, kode_splitzing, nama_samsat
+    except:
+        return "00-00-0000", "000000", "Data Tidak Valid"
+
 # CSS buttonnya biar hijau
 st.markdown("""
     <style>
@@ -79,6 +107,11 @@ def proses_data_audit(excel_file, txt_file):
     # 2. PROSES TXT (Jika ada)
     if txt_file is not None:
         content = txt_file.read().decode("utf-8", errors="ignore")
+
+        if lines:
+        first_line_text = lines[0].decode("utf-8")
+        tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
+        
         lines = [l for l in content.splitlines() if "BL" in l]
         df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
         df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
@@ -155,9 +188,17 @@ if excel_input or txt_input:
         if not txt_input: st.warning("⚠️ Data Splitzing (TXT) belum diunggah. Menampilkan data CERI saja.")
 
         # --- 4. TAMPILAN DASHBOARD ---
-        st.subheader("📊 Ringkasan Perbandingan Data")
+       st.markdown("---")
+        st.subheader("Ringkasan Analisa Perbandingan")
         st.caption("Nominal yang tertulis pada ringkasan adalah Total Pengurangan Splitzing dan Excel, jadi harus double check ya!")
-        
+        # Tampilan Box Informasi Otomatis
+        st.markdown(f"""
+            <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px;">
+                Tanggal: <b>{tgl_fix}</b> | Kode Samsat: <b>{kode_fix}</b> | 
+                <span style="background-color: #e0e0e0; padding: 2px 8px; border-radius: 5px;">Unit: <b>{nama_fix}</b></span>
+            </div>
+        """, unsafe_allow_html=True)
+                
         sum_txt = df_txt['TOTAL_ALL_TXT'].sum() if not df_txt.empty else 0
         sum_excel = df_excel['Jumlah'].sum() if not df_excel.empty else 0
         
@@ -243,6 +284,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
