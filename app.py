@@ -16,17 +16,24 @@ df_ref_samsat = load_samsat_ref()
 
 def extract_header_info(first_line, df_ref):
     try:
-        # Tanggal 1-8: DDMMYYYY
         tgl_raw = first_line[0:8]
         tgl_formatted = f"{tgl_raw[:2]}-{tgl_raw[2:4]}-{tgl_raw[4:]}"
         
-        # Kode Samsat 9-14: 6 digit
         kode_splitzing = first_line[8:14]
         
-        # Cari nama samsat (6 kode splitzing dan 7 kode excel dicocokkan)
-        match = df_ref[df_ref['KodeExcel'].str.contains(kode_splitzing, na=False)]
-        nama_samsat = match.iloc[0]['NamaSamsat'] if not match.empty else "Samsat Tidak Dikenali"
+        prefix = kode_splitzing[:2]  # "08"
+        suffix = kode_splitzing[2:]  # "0312"
+
+        match = df_ref[
+            df_ref['KodeExcel'].str.startswith(prefix) & 
+            df_ref['KodeExcel'].str.endswith(suffix)
+        ]
         
+        if not match.empty:
+            nama_samsat = match.iloc[0]['NamaSamsat']
+        else:
+            nama_samsat = "Unit Tidak Terdaftar"
+            
         return tgl_formatted, kode_splitzing, nama_samsat
     except:
         return "00-00-0000", "000000", "Data Tidak Valid"
@@ -289,6 +296,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
