@@ -19,15 +19,13 @@ def extract_header_info(first_line, df_ref):
         tgl_raw = first_line[0:8]
         tgl_formatted = f"{tgl_raw[:2]}-{tgl_raw[2:4]}-{tgl_raw[4:]}"
         
-        kode_splitzing = first_line[8:14]
+        kode_splitzing = str(first_line[8:14]).strip()
         
-        prefix = kode_splitzing[:2]  # "08"
-        suffix = kode_splitzing[2:]  # "0312"
-
-        match = df_ref[
-            df_ref['KodeExcel'].str.startswith(prefix) & 
-            df_ref['KodeExcel'].str.endswith(suffix)
-        ]
+        suffix_3 = kode_splitzing[-3:] 
+        
+        df_ref['KodeExcel'] = df_ref['KodeExcel'].astype(str)
+        
+        match = df_ref[df_ref['KodeExcel'].str.endswith(suffix_3)]
         
         if not match.empty:
             nama_samsat = match.iloc[0]['NamaSamsat']
@@ -35,8 +33,8 @@ def extract_header_info(first_line, df_ref):
             nama_samsat = "Unit Tidak Terdaftar"
             
         return tgl_formatted, kode_splitzing, nama_samsat
-    except:
-        return "00-00-0000", "000000", "Data Tidak Valid"
+    except Exception as e:
+        return "00-00-0000", "000000", f"Error: {str(e)}"
 
 # CSS buttonnya biar hijau
 st.markdown("""
@@ -296,6 +294,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
