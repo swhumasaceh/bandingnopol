@@ -93,6 +93,8 @@ def proses_data_audit(excel_file, txt_file):
     cocok = pd.DataFrame()
     hanya_excel = pd.DataFrame()
     hanya_txt = pd.DataFrame()
+    
+    txt_file.seek(0)
 
     # 1. PROSES EXCEL (Jika ada)
     if excel_file is not None:
@@ -112,10 +114,19 @@ def proses_data_audit(excel_file, txt_file):
         df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
         tgl_fix, kode_fix, nama_fix = "00-00-0000", "000000", "Data Tidak Valid"
         
-        if lines:
+    if len(lines) > 0:
+        try:
+            # Menggunakan lines[0] dan pastikan di-decode dengan benar
             first_line_text = lines[0].decode("utf-8")
             tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
-
+        except Exception as e:
+            # Jika gagal decode utf-8, coba latin-1 (biasanya file sistem lama pakai ini)
+            try:
+                first_line_text = lines[0].decode("latin-1")
+                tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
+            except:
+                pass
+                
         df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
         df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
         df_txt['POKOK_1']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 104, 7))
@@ -284,6 +295,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
