@@ -6,12 +6,18 @@ import time
 @st.cache_data
 def load_samsat_ref():
     try:
-        df = pd.read_csv("samsat_ref.csv", names=['NamaSamsat', 'KodeExcel'], dtype=str)
+        # Menambahkan sep=';' karena file Anda menggunakan titik koma
+        # Menambahkan header=None agar baris pertama tidak hilang dianggap judul
+        df = pd.read_csv("samsat_ref.csv", sep=';', header=None, names=['NamaSamsat', 'KodeExcel'], dtype=str)
+        
+        # Bersihkan spasi yang mungkin ada di awal/akhir teks
+        df['NamaSamsat'] = df['NamaSamsat'].str.strip()
+        df['KodeExcel'] = df['KodeExcel'].str.strip()
+        
         return df
-    except:
+    except Exception as e:
+        st.error(f"Gagal memuat referensi: {e}")
         return pd.DataFrame(columns=['NamaSamsat', 'KodeExcel'])
-
-df_ref_samsat = load_samsat_ref()
 
 def extract_header_info(first_line, df_ref):
     try:
@@ -290,5 +296,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
