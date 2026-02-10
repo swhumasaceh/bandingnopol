@@ -197,7 +197,7 @@ if excel_input or txt_input:
             st.markdown(f"""
                 <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px;">
                     Tanggal Penetapan: <b>{info_h['tgl']}</b> | Kode Samsat: <b>{info_h['kode']}</b> | 
-                    <span style="background-color: #e0e0e0; padding: 2px 8px; border-radius: 5px;">Unit: <b>{info_h['nama']}</b></span>
+                    <span style="background-color: #e0e0e0; padding: 2px 8px; border-radius: 5px;">Nama Samsat: <b>{info_h['nama']}</b></span>
                 </div>
             """, unsafe_allow_html=True)
         
@@ -286,4 +286,5 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
