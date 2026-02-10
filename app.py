@@ -3,6 +3,36 @@ import pandas as pd
 import re
 import time
 
+@st.cache_data
+def load_samsat_ref():
+    try:
+        df = pd.read_csv("samsat_ref.csv", names=['NamaSamsat', 'KodeExcel'], dtype=str)
+        return df
+    except:
+        return pd.DataFrame(columns=['NamaSamsat', 'KodeExcel'])
+
+df_ref_samsat = load_samsat_ref()
+
+def extract_header_info(first_line, df_ref):
+    try:
+        tgl_raw = first_line[0:8]
+        tgl_formatted = f"{tgl_raw[:2]}-{tgl_raw[2:4]}-{tgl_raw[4:]}"
+        
+        kode_splitzing = first_line[8:14].strip()
+        
+        suffix_target = kode_splitzing[-3:]
+        
+        match = df_ref[df_ref['KodeExcel'].astype(str).str.endswith(suffix_target)]
+        
+        if not match.empty:
+            nama_samsat = match.iloc[0]['NamaSamsat']
+        else:
+            nama_samsat = "Unit Tidak Terdaftar"
+            
+        return tgl_formatted, kode_splitzing, nama_samsat
+    except:
+        return "00-00-0000", "000000", "Data Tidak Valid"
+
 # CSS buttonnya biar hijau
 st.markdown("""
     <style>
@@ -78,10 +108,15 @@ def proses_data_audit(excel_file, txt_file):
 
     # 2. PROSES TXT (Jika ada)
     if txt_file is not None:
-        content = txt_file.read().decode("utf-8", errors="ignore")
-        lines = [l for l in content.splitlines() if "BL" in l]
-        df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
-        df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
+        raw_content = txt_file.getvalue().decode("utf-8", errors="ignore")
+        lines_all = raw_content.splitlines()
+        
+        if lines_all:
+            tgl, kd, nm = extract_header_info(lines_all[0], df_ref_samsat)
+            info_header = {"tgl": tgl, "kode": kd, "nama": nm}
+        
+        lines_data = [l for l in lines_all if "BL" in l]
+        df_txt = pd.DataFrame(lines_data, columns=['RAW_TEXT'])
 
         df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
         df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
@@ -117,7 +152,7 @@ def proses_data_audit(excel_file, txt_file):
     elif not df_txt.empty:
         hanya_txt = df_txt.copy()
 
-    return cocok, hanya_excel, hanya_txt, df_txt, df_excel
+    return cocok, hanya_excel, hanya_txt, df_txt, df_excel, info_header
 
 # --- UI LOGIC ---
 col1, col2 = st.columns(2)
@@ -148,15 +183,23 @@ if excel_input or txt_input:
     
     if st.session_state.proses_selesai:
         with st.spinner('Memproses data...'):
-            cocok, hanya_excel, hanya_txt, df_txt, df_excel = proses_data_audit(excel_input, txt_input)
+            cocok, hanya_excel, hanya_txt, df_txt, df_excel, info_h = proses_data_audit(excel_input, txt_input)
 
         # [cite_start]Menampilkan peringatan jika salah satu file absen [cite: 39]
         if not excel_input: st.warning("⚠️ Data CERI (Excel) belum diunggah. Menampilkan data Splitzing saja.")
         if not txt_input: st.warning("⚠️ Data Splitzing (TXT) belum diunggah. Menampilkan data CERI saja.")
 
         # --- 4. TAMPILAN DASHBOARD ---
-        st.subheader("📊 Ringkasan Perbandingan Data")
+        st.subheader("Ringkasan Analisa Perbandingan Data")
         st.caption("Nominal yang tertulis pada ringkasan adalah Total Pengurangan Splitzing dan Excel, jadi harus double check ya!")
+
+        if txt_input is not None:
+            st.markdown(f"""
+                <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px;">
+                    Tanggal Penetapan: <b>{info_h['tgl']}</b> | Kode Samsat: <b>{info_h['kode']}</b> | 
+                    <span style="background-color: #e0e0e0; padding: 2px 8px; border-radius: 5px;">Unit: <b>{info_h['nama']}</b></span>
+                </div>
+            """, unsafe_allow_html=True)
         
         sum_txt = df_txt['TOTAL_ALL_TXT'].sum() if not df_txt.empty else 0
         sum_excel = df_excel['Jumlah'].sum() if not df_excel.empty else 0
@@ -243,3 +286,4 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
