@@ -89,7 +89,7 @@ def normalize_nopol(text):
 
 # --- FUNGSI PROSES DENGAN CACHE ---
 @st.cache_data(show_spinner=False)
-def proses_data_audit(excel_file, txt_file):
+def proses_data_audit_v2(excel_file, txt_file, df_ref):
     df_excel = pd.DataFrame()
     df_txt = pd.DataFrame()
     cocok = pd.DataFrame()
@@ -287,6 +287,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
