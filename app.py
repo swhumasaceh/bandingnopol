@@ -186,8 +186,8 @@ if excel_input or txt_input:
         if not excel_input: st.warning("⚠️ Data CERI (Excel) belum diunggah. Menampilkan data Splitzing saja.")
         if not txt_input: st.warning("⚠️ Data Splitzing (TXT) belum diunggah. Menampilkan data CERI saja.")
 
-        # --- 4. TAMPILAN DASHBOARD ---
-       st.markdown("---")
+        #  Dashboard analisa
+        st.markdown("---")
         st.subheader("Ringkasan Analisa Perbandingan")
         st.caption("Nominal yang tertulis pada ringkasan adalah Total Pengurangan Splitzing dan Excel, jadi harus double check ya!")
         # Tampilan Box Informasi Otomatis
@@ -283,6 +283,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
