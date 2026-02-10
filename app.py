@@ -89,6 +89,7 @@ def normalize_nopol(text):
 @st.cache_data(show_spinner=False)
 def proses_data_audit(excel_file, txt_file):
     df_excel = pd.DataFrame()
+    df_excel = pd.read_excel(uploaded_excel)
     df_txt = pd.DataFrame()
     cocok = pd.DataFrame()
     hanya_excel = pd.DataFrame()
@@ -295,6 +296,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
