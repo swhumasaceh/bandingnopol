@@ -3,39 +3,6 @@ import pandas as pd
 import re
 import time
 
-# Load kode samsat
-@st.cache_data
-def load_samsat_ref():
-    try:
-        df = pd.read_csv("samsat_ref.csv", names=['NamaSamsat', 'KodeExcel'], dtype=str)
-        return df
-    except:
-        return pd.DataFrame(columns=['NamaSamsat', 'KodeExcel'])
-
-df_ref_samsat = load_samsat_ref()
-
-def extract_header_info(first_line, df_ref):
-    try:
-        tgl_raw = first_line[0:8]
-        tgl_formatted = f"{tgl_raw[:2]}-{tgl_raw[2:4]}-{tgl_raw[4:]}"
-        
-        kode_splitzing = str(first_line[8:14]).strip()
-        
-        suffix_3 = kode_splitzing[-3:] 
-        
-        df_ref['KodeExcel'] = df_ref['KodeExcel'].astype(str)
-        
-        match = df_ref[df_ref['KodeExcel'].str.endswith(suffix_3)]
-        
-        if not match.empty:
-            nama_samsat = match.iloc[0]['NamaSamsat']
-        else:
-            nama_samsat = "Unit Tidak Terdaftar"
-            
-        return tgl_formatted, kode_splitzing, nama_samsat
-    except Exception as e:
-        return "00-00-0000", "000000", f"Error: {str(e)}"
-
 # CSS buttonnya biar hijau
 st.markdown("""
     <style>
@@ -98,8 +65,6 @@ def proses_data_audit(excel_file, txt_file):
     cocok = pd.DataFrame()
     hanya_excel = pd.DataFrame()
     hanya_txt = pd.DataFrame()
-    
-    txt_file.seek(0)
 
     # 1. PROSES EXCEL (Jika ada)
     if excel_file is not None:
@@ -113,19 +78,11 @@ def proses_data_audit(excel_file, txt_file):
 
     # 2. PROSES TXT (Jika ada)
     if txt_file is not None:
-        content = txt_file.read().decode("utf-8", errors="ignore")        
+        content = txt_file.read().decode("utf-8", errors="ignore")
         lines = [l for l in content.splitlines() if "BL" in l]
         df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
         df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
-        
-        content = txt_file.getvalue().decode("utf-8", errors="ignore")
-        lines = content.splitlines()
-        tgl_fix, kode_fix, nama_fix = "00-00-0000", "000000", "Data Tidak Valid"
-    
-    if len(lines) > 0:
-        first_line_text = lines[0]
-        tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
-                
+
         df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
         df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
         df_txt['POKOK_1']  = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 104, 7))
@@ -160,7 +117,7 @@ def proses_data_audit(excel_file, txt_file):
     elif not df_txt.empty:
         hanya_txt = df_txt.copy()
 
-    return cocok, hanya_excel, hanya_txt, df_txt, df_excel, tgl_fix, kode_fix, nama_fix
+    return cocok, hanya_excel, hanya_txt, df_txt, df_excel
 
 # --- UI LOGIC ---
 col1, col2 = st.columns(2)
@@ -191,24 +148,16 @@ if excel_input or txt_input:
     
     if st.session_state.proses_selesai:
         with st.spinner('Memproses data...'):
-            cocok, hanya_excel, hanya_txt, df_txt, df_excel, tgl_fix, kode_fix, nama_fix = proses_data_audit(excel_input, txt_input)
+            cocok, hanya_excel, hanya_txt, df_txt, df_excel = proses_data_audit(excel_input, txt_input)
 
         # [cite_start]Menampilkan peringatan jika salah satu file absen [cite: 39]
         if not excel_input: st.warning("⚠️ Data CERI (Excel) belum diunggah. Menampilkan data Splitzing saja.")
         if not txt_input: st.warning("⚠️ Data Splitzing (TXT) belum diunggah. Menampilkan data CERI saja.")
 
-        #  Dashboard analisa
-        st.markdown("---")
-        st.subheader("Ringkasan Analisa Perbandingan")
+        # --- 4. TAMPILAN DASHBOARD ---
+        st.subheader("📊 Ringkasan Perbandingan Data")
         st.caption("Nominal yang tertulis pada ringkasan adalah Total Pengurangan Splitzing dan Excel, jadi harus double check ya!")
-        # Tampilan Box Informasi Otomatis
-        st.markdown(f"""
-            <div style="background-color: #f0f2f6; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px;">
-                Tanggal: <b>{tgl_fix}</b> | Kode Samsat: <b>{kode_fix}</b> | 
-                <span style="background-color: #e0e0e0; padding: 2px 8px; border-radius: 5px;">Unit: <b>{nama_fix}</b></span>
-            </div>
-        """, unsafe_allow_html=True)
-                
+        
         sum_txt = df_txt['TOTAL_ALL_TXT'].sum() if not df_txt.empty else 0
         sum_excel = df_excel['Jumlah'].sum() if not df_excel.empty else 0
         
@@ -294,23 +243,3 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
