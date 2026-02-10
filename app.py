@@ -95,6 +95,7 @@ def proses_data_audit(excel_file, txt_file):
     cocok = pd.DataFrame()
     hanya_excel = pd.DataFrame()
     hanya_txt = pd.DataFrame()
+    info_header = {"tgl": "-", "kode": "-", "nama": "-"} # Inisialisasi awal
 
     # 1. PROSES EXCEL (Jika ada)
     if excel_file is not None:
@@ -286,6 +287,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
