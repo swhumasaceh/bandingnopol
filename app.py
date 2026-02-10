@@ -121,7 +121,7 @@ def proses_data_audit(excel_file, txt_file):
         all_lines = content.splitlines() 
         
         if all_lines:
-            tgl, kd, nm = extract_header_info(all_lines[0], df_ref_samsat)
+            tgl, kd, nm = extract_header_info(all_lines[0], df_ref)
             info_header = {"tgl": tgl, "kode": kd, "nama": nm}
             
         lines_nopol = [l for l in all_lines if "BL" in l]
@@ -193,7 +193,7 @@ if excel_input or txt_input:
     
     if st.session_state.proses_selesai:
         with st.spinner('Memproses data...'):
-            cocok, hanya_excel, hanya_txt, df_txt, df_excel, info_h = proses_data_audit(excel_input, txt_input)
+            cocok, hanya_excel, hanya_txt, df_txt, df_excel, info_h = proses_data_audit(excel_input, txt_input, df_ref_samsat)
 
         # [cite_start]Menampilkan peringatan jika salah satu file absen [cite: 39]
         if not excel_input: st.warning("⚠️ Data CERI (Excel) belum diunggah. Menampilkan data Splitzing saja.")
@@ -296,6 +296,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
