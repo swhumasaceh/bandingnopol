@@ -108,8 +108,8 @@ def proses_data_audit(excel_file, txt_file):
     if txt_file is not None:
         content = txt_file.read().decode("utf-8", errors="ignore")
 
-        if lines:
-        first_line_text = lines[0].decode("utf-8")
+        if content:
+        first_line_text = content[0].decode("utf-8")
         tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
         
         lines = [l for l in content.splitlines() if "BL" in l]
@@ -284,6 +284,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
