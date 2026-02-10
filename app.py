@@ -19,6 +19,8 @@ def load_samsat_ref():
         st.error(f"Gagal memuat referensi: {e}")
         return pd.DataFrame(columns=['NamaSamsat', 'KodeExcel'])
 
+df_ref_samsat = load_samsat_ref()
+
 def extract_header_info(first_line, df_ref):
     try:
         tgl_raw = first_line[0:8]
@@ -296,6 +298,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
