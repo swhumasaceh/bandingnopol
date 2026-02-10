@@ -106,15 +106,14 @@ def proses_data_audit(excel_file, txt_file):
 
     # 2. PROSES TXT (Jika ada)
     if txt_file is not None:
-        content = txt_file.read().decode("utf-8", errors="ignore")
-
-        if content:
-        first_line_text = content[0].decode("utf-8")
-        tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
-        
+        content = txt_file.read().decode("utf-8", errors="ignore")        
         lines = [l for l in content.splitlines() if "BL" in l]
         df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
         df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
+
+        if lines:
+            first_line_text = lines[0].decode("utf-8")
+            tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
 
         df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
         df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
