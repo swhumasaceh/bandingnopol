@@ -89,7 +89,6 @@ def normalize_nopol(text):
 @st.cache_data(show_spinner=False)
 def proses_data_audit(excel_file, txt_file):
     df_excel = pd.DataFrame()
-    df_excel = pd.read_excel(uploaded_excel)
     df_txt = pd.DataFrame()
     cocok = pd.DataFrame()
     hanya_excel = pd.DataFrame()
@@ -113,20 +112,14 @@ def proses_data_audit(excel_file, txt_file):
         lines = [l for l in content.splitlines() if "BL" in l]
         df_txt = pd.DataFrame(lines, columns=['RAW_TEXT'])
         df_txt['NOPOL_NORMALIZED'] = df_txt['RAW_TEXT'].apply(normalize_nopol)
-        tgl_fix, kode_fix, nama_fix = "00-00-0000", "000000", "Data Tidak Valid"
         
+        content = txt_file.getvalue().decode("utf-8", errors="ignore")
+        lines = content.splitlines()
+        tgl_fix, kode_fix, nama_fix = "00-00-0000", "000000", "Data Tidak Valid"
+    
     if len(lines) > 0:
-        try:
-            # Menggunakan lines[0] dan pastikan di-decode dengan benar
-            first_line_text = lines[0].decode("utf-8")
-            tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
-        except Exception as e:
-            # Jika gagal decode utf-8, coba latin-1 (biasanya file sistem lama pakai ini)
-            try:
-                first_line_text = lines[0].decode("latin-1")
-                tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
-            except:
-                pass
+        first_line_text = lines[0]
+        tgl_fix, kode_fix, nama_fix = extract_header_info(first_line_text, df_ref_samsat)
                 
         df_txt['POKOK_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 90, 7))
         df_txt['DENDA_SW'] = df_txt['RAW_TEXT'].apply(lambda x: extract_fixed(x, 97, 7))
@@ -296,6 +289,7 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
 
