@@ -183,7 +183,7 @@ if excel_input or txt_input:
     
     if st.session_state.proses_selesai:
         with st.spinner('Memproses data...'):
-            cocok, hanya_excel, hanya_txt, df_txt, df_excel, info_h = proses_data_audit(excel_input, txt_input)
+            cocok, hanya_excel, hanya_txt, df_txt, df_excel, info_h = proses_data_audit(excel_input, txt_input, df_ref_samsat)
 
         # [cite_start]Menampilkan peringatan jika salah satu file absen [cite: 39]
         if not excel_input: st.warning("⚠️ Data CERI (Excel) belum diunggah. Menampilkan data Splitzing saja.")
@@ -286,5 +286,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
 
 
